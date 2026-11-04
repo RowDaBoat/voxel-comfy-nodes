@@ -8,6 +8,7 @@ import torch
 from PIL import Image, ImageOps
 
 
+ALPHA_FLOOR = 32 / 255
 NUMBERED_PICTURE = re.compile(r"-(\d+)\.png$", re.IGNORECASE)
 ARCHIVE_EXTENSION = ".zip"
 
@@ -54,26 +55,35 @@ def channels_of(picture):
     return numpy.asarray(picture, dtype=numpy.float32) / 255.0
 
 
-def image_and_mask(source):
-    """An IMAGE `(1,H,W,3)` and a MASK `(1,H,W)` the way ComfyUI's Load Image makes them:
-    the mask is one minus alpha, empty when the picture has no alpha."""
+def cleaned_alpha(alpha):
+    """Alpha with the faint pixels cleared: generated pictures often hide colored smudges
+    at alpha 1/255, invisible on screen but solid once alpha is dropped."""
+    return torch.where(alpha < ALPHA_FLOOR, torch.zeros_like(alpha), alpha)
+
+
+def image_and_foreground(source):
+    """An IMAGE `(1,H,W,3)`, a foreground MASK `(1,H,W)` that is 1 on the subject like
+    Remove Background's, and whether the picture lacked alpha and still needs its
+    background removed. A picture with alpha comes out on black, its alpha as foreground."""
     with Image.open(source) as opened:
         picture = ImageOps.exif_transpose(opened)
-        image = torch.from_numpy(channels_of(picture.convert("RGB"))).unsqueeze(0)
-        if "A" in picture.getbands():
-            alpha = torch.from_numpy(channels_of(picture.getchannel("A")))
-            mask = 1.0 - alpha
+        image = torch.from_numpy(channels_of(picture.convert("RGB")))
+        has_alpha = "A" in picture.getbands() or "transparency" in picture.info
+        if has_alpha:
+            foreground = cleaned_alpha(torch.from_numpy(channels_of(picture.convert("RGBA").getchannel("A"))))
+            image = image * foreground.unsqueeze(-1)
         else:
-            mask = torch.zeros(image.shape[1:3])
-    return image, mask.unsqueeze(0)
+            foreground = torch.ones(image.shape[0:2])
+    return image.unsqueeze(0), foreground.unsqueeze(0), not has_alpha
 
 
 def numbered_picture(archive_path, index):
-    """The `index`th numbered picture of the archive, its number, and how many there are."""
+    """The `index`th numbered picture of the archive as `image_and_foreground` makes it,
+    its number, how many there are, and its entry in the archive."""
     with zipfile.ZipFile(archive_path) as archive:
         entries = numbered_pictures_in(archive)
         if index >= len(entries):
             raise ValueError(f"index {index} is past the {len(entries)} numbered pictures in "
                              f"{os.path.basename(archive_path)}, the batch is done")
-        image, mask = image_and_mask(io.BytesIO(archive.read(entries[index])))
-        return image, mask, number_of(entries[index]), len(entries), entries[index].filename
+        image, foreground, remove_background = image_and_foreground(io.BytesIO(archive.read(entries[index])))
+        return image, foreground, remove_background, number_of(entries[index]), len(entries), entries[index].filename

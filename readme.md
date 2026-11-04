@@ -23,11 +23,14 @@ ComfyUI lists it under the templates of this node pack.
 ## Bulk
 `example_workflows/trellis2_images_to_multi_model_vox.json` turns a zip of numbered pictures into one `.vox`:
 1. Zip the pictures, named `<anything>-<number>.png` (`hero-1.png`, `hero-2.png`, ... `hero-10.png`), anywhere in the zip.
-2. Press **Upload zip** on Load Numbered Image, which also resets `index` to `0`; leave it on `increment`.
-3. Run as many times as there are pictures.
+2. Press **Upload zip** on Load Numbered Image, which also resets `index` to `0`.
+3. Press **Run** once. With `whole_zip` on, each picture queues the next after it until the zip is done, as long as the window stays open; off, each Run does one picture.
 
 Other files in the zip, and the `__MACOSX` entries macOS adds, are ignored; two pictures with the same number are refused.
+A picture with alpha is its own cutout: it comes out on black with its alpha as `foreground`, and `remove_background` is false so the workflow skips Remove Background.
+Pixels below alpha 32/255 are dropped first, generated pictures hide colored smudges there that turn solid once alpha is ignored.
 Each run processes one picture end to end, so memory stays flat however many there are, and a run past the last picture stops with an error.
+The next picture is queued as soon as one loads, so a picture failing later on does not stop the ones after it.
 The model is saved as `output/<collection>/<number>.vox`, then `output/<collection>.vox` is rewritten with every model of the collection: named by its picture's number, on a grid standing on z = 0, all sharing one palette of `colors`.
 A picture run again replaces its model; a new set of pictures wants a new `collection`.
 

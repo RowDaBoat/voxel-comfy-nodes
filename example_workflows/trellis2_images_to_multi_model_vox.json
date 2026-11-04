@@ -2,7 +2,7 @@
   "id": "aa77013b-18f1-4679-9678-6d455d3536c5",
   "revision": 0,
   "last_node_id": 326,
-  "last_link_id": 1300,
+  "last_link_id": 1301,
   "nodes": [
     {
       "id": 3,
@@ -990,7 +990,7 @@
       ],
       "size": [
         340,
-        160
+        200
       ],
       "flags": {},
       "order": 9,
@@ -1006,7 +1006,7 @@
           ]
         },
         {
-          "name": "mask",
+          "name": "foreground",
           "type": "MASK",
           "links": [
             1102
@@ -1024,6 +1024,13 @@
           "name": "count",
           "type": "INT",
           "links": []
+        },
+        {
+          "name": "remove_background",
+          "type": "BOOLEAN",
+          "links": [
+            1301
+          ]
         }
       ],
       "properties": {
@@ -1033,7 +1040,8 @@
       "widgets_values": [
         "characters.zip",
         0,
-        "increment"
+        "increment",
+        true
       ],
       "title": "Load Numbered Image"
     },
@@ -1331,6 +1339,14 @@
           "shape": 7,
           "type": "MASK",
           "link": 1101
+        },
+        {
+          "name": "switch",
+          "type": "BOOLEAN",
+          "widget": {
+            "name": "switch"
+          },
+          "link": 1301
         }
       ],
       "outputs": [
@@ -1342,7 +1358,7 @@
           ]
         }
       ],
-      "title": "Switch: Remove background",
+      "title": "Switch: Remove background (pictures without alpha)",
       "properties": {
         "Node name for S&R": "ComfySwitchNode",
         "cnr_id": "comfy-core",
@@ -2016,7 +2032,7 @@
       "properties": {},
       "title": "Bulk pictures to one .vox",
       "widgets_values": [
-        "## Bulk pictures to one .vox\n1. Zip the pictures, named `<anything>-<number>.png` (`hero-1.png`, `hero-2.png`, ... `hero-10.png`), and press **Upload zip** on Load Numbered Image.\n2. Leave **index** at `0` on `increment`; uploading a zip resets it.\n3. Run as many times as there are pictures (the run count next to Run). One picture is processed per run, so memory stays flat however many there are; a run past the last picture stops with an error.\n\nEach picture is saved as `output/vox/characters/<number>.vox`, and every run rewrites `output/vox/characters.vox` with all of them on a grid, sharing one palette. Re-running a picture replaces its model; use a new collection name for a new set.\n\nThe Download button fetches the multi-model file."
+        "## Bulk pictures to one .vox\n1. Zip the pictures, named `<anything>-<number>.png` (`hero-1.png`, `hero-2.png`, ... `hero-10.png`), and press **Upload zip** on Load Numbered Image. Uploading resets **index** to `0`.\n2. Press **Run** once. With **whole_zip** on, each finished picture queues the next until the zip is done; keep this window open meanwhile. One picture is processed per run, so memory stays flat.\n\nPictures with alpha use it as their cutout and skip background removal; faint pixels below alpha 32/255 are dropped. Pictures without alpha go through Remove Background.\n\nEach picture is saved as `output/vox/characters/<number>.vox`, and every run rewrites `output/vox/characters.vox` with all of them on a grid, sharing one palette. Re-running a picture replaces its model; use a new collection name for a new set.\n\nThe Download button fetches the multi-model file."
       ]
     }
   ],
@@ -2556,6 +2572,14 @@
       325,
       1,
       "STRING"
+    ],
+    [
+      1301,
+      122,
+      4,
+      248,
+      2,
+      "BOOLEAN"
     ]
   ],
   "groups": [

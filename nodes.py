@@ -157,12 +157,19 @@ def archive_path_of(archive):
 
 class LoadNumberedImage:
     """One picture of a zip per run, in the order of the numbers their names end in
-    (`hero-1.png`, `hero-2.png`, ... `hero-10.png`): queue as many runs as there are
-    pictures with `index` on increment."""
+    (`hero-1.png`, `hero-2.png`, ... `hero-10.png`). With `whole_zip` the frontend queues
+    the next picture after each run until the zip is done."""
 
     CATEGORY = "vexel"
-    RETURN_TYPES = ("IMAGE", "MASK", "STRING", "INT")
-    RETURN_NAMES = ("image", "mask", "name", "count")
+    RETURN_TYPES = ("IMAGE", "MASK", "STRING", "INT", "BOOLEAN")
+    RETURN_NAMES = ("image", "foreground", "name", "count", "remove_background")
+    OUTPUT_TOOLTIPS = (
+        "The picture, on black where it is transparent.",
+        "1 on the subject, like Remove Background's mask: the picture's alpha, or all of it without alpha.",
+        "The number the picture's name ends in.",
+        "How many numbered pictures the zip holds.",
+        "True when the picture has no alpha, so its background still has to be removed.",
+    )
     FUNCTION = "load"
 
     @classmethod
@@ -173,15 +180,19 @@ class LoadNumberedImage:
                     "tooltip": "Zip of pictures named <anything>-<number>.png, in ComfyUI's input directory."}),
                 "index": ("INT", {"default": 0, "min": 0, "max": MAXIMUM_INDEX, "control_after_generate": True,
                                   "tooltip": "Which picture, counting from 0 in the order of their numbers."}),
+                "whole_zip": ("BOOLEAN", {"default": True, "tooltip": (
+                    "Queue the next picture after each run, until the zip is done. "
+                    "Off, each Run does one picture.")}),
             }
         }
 
     @classmethod
-    def IS_CHANGED(cls, zip, index):
+    def IS_CHANGED(cls, zip, index, whole_zip):
         archive_path = archive_path_of(zip)
         return os.path.getmtime(archive_path) if os.path.isfile(archive_path) else zip
 
-    def load(self, zip, index):
-        image, mask, number, count, entry = numbered_picture(archive_path_of(zip), index)
+    def load(self, zip, index, whole_zip):
+        image, foreground, remove_background, number, count, entry = numbered_picture(archive_path_of(zip), index)
         print(f"[LoadNumberedImage] {index + 1}/{count} {zip}: {entry}")
-        return image, mask, number, count
+        picture = {"index": index, "count": count, "whole_zip": whole_zip}
+        return {"ui": {"picture": [picture]}, "result": (image, foreground, number, count, remove_background)}

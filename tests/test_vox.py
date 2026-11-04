@@ -243,10 +243,22 @@ class CollectionTests(unittest.TestCase):
             self.add(colored_line(1, [1.0, 0.0, 0.0]), "1", collection="../escaped")
 
 
-def png_bytes(alpha):
+def png_bytes(alpha, mode="RGBA"):
     from PIL import Image
     output = io.BytesIO()
-    Image.new("RGBA", (4, 3), (255, 0, 0, alpha)).save(output, format="PNG")
+    Image.new(mode, (4, 3), (255, 0, 0, alpha)[:len(mode)]).save(output, format="PNG")
+    return output.getvalue()
+
+
+def smudged_png_bytes():
+    """Red subject on the left half, a fuchsia smudge at alpha 1/255 on the right."""
+    from PIL import Image
+    picture = Image.new("RGBA", (4, 2), (255, 0, 255, 1))
+    for x in range(2):
+        for y in range(2):
+            picture.putpixel((x, y), (255, 0, 0, 255))
+    output = io.BytesIO()
+    picture.save(output, format="PNG")
     return output.getvalue()
 
 
@@ -277,28 +289,54 @@ class LoaderTests(unittest.TestCase):
         self.assertEqual(offered, ["loose.zip", "sets/heroes.zip"])
 
     def test_pictures_load_in_order_of_their_numbers(self):
-        names = [self.nodes.LoadNumberedImage().load("sets/heroes.zip", index)[2] for index in range(3)]
+        names = [self.load("sets/heroes.zip", index)[2] for index in range(3)]
         self.assertEqual(names, ["1", "2", "10"])
 
-    def test_picture_becomes_image_mask_and_count(self):
-        image, mask, name, count = self.nodes.LoadNumberedImage().load("sets/heroes.zip", 2)
+    def load(self, archive, index, whole_zip=True):
+        return self.nodes.LoadNumberedImage().load(archive, index, whole_zip)["result"]
+
+    def test_picture_becomes_image_foreground_and_count(self):
+        image, foreground, name, count, remove_background = self.load("sets/heroes.zip", 1)
         self.assertEqual(tuple(image.shape), (1, 3, 4, 3))
-        self.assertEqual(tuple(mask.shape), (1, 3, 4))
-        self.assertEqual(float(mask.min()), 1.0)
+        self.assertEqual(tuple(foreground.shape), (1, 3, 4))
+        self.assertEqual(float(foreground.min()), 1.0)
         self.assertEqual(count, 3)
+        self.assertFalse(remove_background)
+
+    def test_transparent_picture_is_on_black_without_foreground(self):
+        image, foreground, _, _, _ = self.load("sets/heroes.zip", 2)
+        self.assertEqual(float(image.max()), 0.0)
+        self.assertEqual(float(foreground.max()), 0.0)
+
+    def test_faint_smudges_are_cleared_from_the_foreground_and_image(self):
+        self.write_zip("smudged.zip", {"girl-1.png": smudged_png_bytes()})
+        image, foreground, _, _, _ = self.load("smudged.zip", 0)
+        self.assertEqual(foreground[0].tolist(), [[1.0, 1.0, 0.0, 0.0]] * 2)
+        self.assertEqual(image[0, :, 2:].abs().sum().item(), 0.0)
+        self.assertEqual(image[0, 0, 0].tolist(), [1.0, 0.0, 0.0])
+
+    def test_picture_without_alpha_needs_its_background_removed(self):
+        self.write_zip("opaque.zip", {"girl-1.png": png_bytes(255, mode="RGB")})
+        _, foreground, _, _, remove_background = self.load("opaque.zip", 0)
+        self.assertTrue(remove_background)
+        self.assertEqual(float(foreground.min()), 1.0)
+
+    def test_progress_is_reported_for_queueing_the_next_picture(self):
+        output = self.nodes.LoadNumberedImage().load("sets/heroes.zip", 1, True)
+        self.assertEqual(output["ui"]["picture"], [{"index": 1, "count": 3, "whole_zip": True}])
 
     def test_index_past_the_last_picture_ends_the_batch(self):
         with self.assertRaises(ValueError):
-            self.nodes.LoadNumberedImage().load("sets/heroes.zip", 3)
+            self.load("sets/heroes.zip", 3)
 
     def test_pictures_sharing_a_number_are_refused(self):
         self.write_zip("twins.zip", {"a-1.png": png_bytes(255), "b-01.png": png_bytes(255)})
         with self.assertRaises(ValueError):
-            self.nodes.LoadNumberedImage().load("twins.zip", 0)
+            self.load("twins.zip", 0)
 
     def test_zip_outside_the_input_directory_is_refused(self):
         with self.assertRaises(ValueError):
-            self.nodes.LoadNumberedImage().load("../escaped.zip", 0)
+            self.load("../escaped.zip", 0)
 
 
 if __name__ == "__main__":

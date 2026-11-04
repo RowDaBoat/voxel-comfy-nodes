@@ -114,6 +114,31 @@ function addUploadButton(node) {
 }
 
 
+async function hasPendingRuns() {
+  const response = await api.fetchApi("/queue");
+  const queue = await response.json();
+  return queue.queue_pending.length > 0;
+}
+
+
+function isOnScreen(node) {
+  return app.graph.getNodeById(node.id) === node;
+}
+
+
+async function queueNextPicture(node, picture) {
+  // Runs already waiting, such as a Run with a count, walk the zip on their own; and
+  // only the graph holding this loader may be queued, not one switched to since.
+  const isLastPicture = picture.index + 1 >= picture.count;
+  if (!picture.whole_zip || isLastPicture || !isOnScreen(node) || await hasPendingRuns()) {
+    return;
+  }
+  console.log(`[LoadNumberedImage] queueing picture ${picture.index + 2}/${picture.count}`);
+  node.widgets.find(widget => widget.name === "index").value = picture.index + 1;
+  await app.queuePrompt(0, 1);
+}
+
+
 app.registerExtension({
   name: "vexel.LoadNumberedImage.increment",
 
@@ -127,6 +152,15 @@ app.registerExtension({
       onNodeCreated?.apply(this, arguments);
       incrementByDefault(this);
       addUploadButton(this);
+    };
+
+    const onExecuted = nodeType.prototype.onExecuted;
+    nodeType.prototype.onExecuted = function (output) {
+      onExecuted?.apply(this, arguments);
+      const picture = output?.picture?.[0];
+      if (picture) {
+        queueNextPicture(this, picture);
+      }
     };
   },
 });
