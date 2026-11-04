@@ -5,7 +5,7 @@ ComfyUI node that saves a native `VOXEL` (TRELLIS.2 and Pixal3D structures or te
 ## Install
 Copy this directory into `ComfyUI/custom_nodes/` and restart ComfyUI.
 The node appears as **Save Voxels as .vox** under the `vexel` category, files land in `ComfyUI/output/vox/`.
-After a run the node shows a **Download** button that fetches the file to the machine running the browser.
+The node has a **Download** button that fetches its latest file to the machine running the browser.
 
 
 ## Wiring

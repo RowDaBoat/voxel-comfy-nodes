@@ -2,6 +2,10 @@ import { app } from "../../scripts/app.js";
 import { api } from "../../scripts/api.js";
 
 
+const NODE_TYPE = "SaveVoxelsAsVox";
+const HISTORY_LENGTH = 64;
+
+
 function viewUrlOf(voxFile) {
   const query = new URLSearchParams(voxFile);
   return api.apiURL(`/view?${query}`);
@@ -18,18 +22,40 @@ function download(voxFile) {
 }
 
 
-function addDownloadButton(node) {
-  const button = node.addWidget("button", "Download .vox", null, () => download(node.voxFile));
-  button.serialize = false;
-  return button;
+function voxFileOfEntry(entry, nodeId) {
+  const isSaveNode = entry.prompt?.[2]?.[nodeId]?.class_type === NODE_TYPE;
+  return isSaveNode ? entry.outputs?.[nodeId]?.vox_files?.[0] : undefined;
+}
+
+
+async function latestVoxFileOf(nodeId) {
+  const response = await api.fetchApi(`/history?max_items=${HISTORY_LENGTH}`);
+  const entries = Object.values(await response.json()).reverse();
+  return entries.map(entry => voxFileOfEntry(entry, nodeId)).find(voxFile => voxFile);
+}
+
+
+async function downloadLatest(node) {
+  const voxFile = node.voxFile ?? await latestVoxFileOf(String(node.id));
+  if (!voxFile) {
+    alert("Nothing saved by this node yet, run the workflow first.");
+    return;
+  }
+  showDownload(node, voxFile);
+  download(voxFile);
 }
 
 
 function showDownload(node, voxFile) {
   node.voxFile = voxFile;
-  node.downloadButton ??= addDownloadButton(node);
   node.downloadButton.label = `Download ${voxFile.filename}`;
   node.setDirtyCanvas(true, true);
+}
+
+
+function addDownloadButton(node) {
+  node.downloadButton = node.addWidget("button", "Download .vox", null, () => downloadLatest(node));
+  node.downloadButton.serialize = false;
 }
 
 
@@ -37,9 +63,15 @@ app.registerExtension({
   name: "vexel.SaveVoxelsAsVox.download",
 
   beforeRegisterNodeDef(nodeType, nodeData) {
-    if (nodeData.name !== "SaveVoxelsAsVox") {
+    if (nodeData.name !== NODE_TYPE) {
       return;
     }
+
+    const onNodeCreated = nodeType.prototype.onNodeCreated;
+    nodeType.prototype.onNodeCreated = function () {
+      onNodeCreated?.apply(this, arguments);
+      addDownloadButton(this);
+    };
 
     const onExecuted = nodeType.prototype.onExecuted;
     nodeType.prototype.onExecuted = function (output) {
