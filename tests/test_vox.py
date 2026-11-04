@@ -1,10 +1,12 @@
 import importlib
+import io
 import os
 import struct
 import sys
 import tempfile
 import types
 import unittest
+import zipfile
 
 import torch
 
@@ -241,25 +243,45 @@ class CollectionTests(unittest.TestCase):
             self.add(colored_line(1, [1.0, 0.0, 0.0]), "1", collection="../escaped")
 
 
+def png_bytes(alpha):
+    from PIL import Image
+    output = io.BytesIO()
+    Image.new("RGBA", (4, 3), (255, 0, 0, alpha)).save(output, format="PNG")
+    return output.getvalue()
+
+
 class LoaderTests(unittest.TestCase):
     def setUp(self):
-        from PIL import Image
         self.directory = tempfile.mkdtemp()
         sys.modules["folder_paths"] = fake_folder_paths(self.directory)
         self.nodes = importlib.import_module("comfyui_vox.nodes")
         self.nodes.folder_paths = sys.modules["folder_paths"]
-        folder = os.path.join(self.directory, "input", "characters")
-        os.makedirs(folder)
-        for number in (1, 2, 10):
-            Image.new("RGBA", (4, 3), (255, 0, 0, 0 if number == 10 else 255)).save(os.path.join(folder, f"{number}.png"))
-        open(os.path.join(folder, "notes.txt"), "w").close()
+        os.makedirs(os.path.join(self.directory, "input", "sets"))
+        self.write_zip("sets/heroes.zip", {
+            "heroes/hero-10.png": png_bytes(0),
+            "heroes/hero-2.png": png_bytes(255),
+            "hero-1.png": png_bytes(255),
+            "__MACOSX/heroes/._hero-2.png": b"resource fork",
+            "heroes/cover.png": png_bytes(255),
+            "heroes/notes.txt": b"",
+        })
 
-    def test_pictures_load_in_numeric_order(self):
-        names = [self.nodes.LoadNumberedImage().load("characters", index)[2] for index in range(3)]
+    def write_zip(self, name, entries):
+        with zipfile.ZipFile(os.path.join(self.directory, "input", name), "w") as archive:
+            for entry, content in entries.items():
+                archive.writestr(entry, content)
+
+    def test_zips_are_offered_from_the_input_directory(self):
+        self.write_zip("loose.zip", {})
+        offered = self.nodes.LoadNumberedImage.INPUT_TYPES()["required"]["zip"][0]
+        self.assertEqual(offered, ["loose.zip", "sets/heroes.zip"])
+
+    def test_pictures_load_in_order_of_their_numbers(self):
+        names = [self.nodes.LoadNumberedImage().load("sets/heroes.zip", index)[2] for index in range(3)]
         self.assertEqual(names, ["1", "2", "10"])
 
     def test_picture_becomes_image_mask_and_count(self):
-        image, mask, name, count = self.nodes.LoadNumberedImage().load("characters", 2)
+        image, mask, name, count = self.nodes.LoadNumberedImage().load("sets/heroes.zip", 2)
         self.assertEqual(tuple(image.shape), (1, 3, 4, 3))
         self.assertEqual(tuple(mask.shape), (1, 3, 4))
         self.assertEqual(float(mask.min()), 1.0)
@@ -267,11 +289,16 @@ class LoaderTests(unittest.TestCase):
 
     def test_index_past_the_last_picture_ends_the_batch(self):
         with self.assertRaises(ValueError):
-            self.nodes.LoadNumberedImage().load("characters", 3)
+            self.nodes.LoadNumberedImage().load("sets/heroes.zip", 3)
 
-    def test_folder_outside_the_input_directory_is_refused(self):
+    def test_pictures_sharing_a_number_are_refused(self):
+        self.write_zip("twins.zip", {"a-1.png": png_bytes(255), "b-01.png": png_bytes(255)})
         with self.assertRaises(ValueError):
-            self.nodes.LoadNumberedImage().load("../..", 0)
+            self.nodes.LoadNumberedImage().load("twins.zip", 0)
+
+    def test_zip_outside_the_input_directory_is_refused(self):
+        with self.assertRaises(ValueError):
+            self.nodes.LoadNumberedImage().load("../escaped.zip", 0)
 
 
 if __name__ == "__main__":

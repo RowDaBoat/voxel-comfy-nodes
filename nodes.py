@@ -2,8 +2,8 @@ import os
 
 import folder_paths
 
-from .imageloading import image_and_mask, image_paths_in
-from .naming import folder_inside, safe_name, stem_of
+from .imageloading import archives_in, numbered_picture
+from .naming import folder_inside, safe_name
 from .palettequantization import quantized, palette_of
 from .vox import write_vox, single_color_palette
 from .voxcollection import write_collection
@@ -151,12 +151,13 @@ class SaveVoxelsToVoxCollection:
         return {"ui": {"text": [summary], "vox_files": [saved_file_of(collection_path)]}}
 
 
-def picture_paths(folder):
-    return image_paths_in(folder_inside(folder_paths.get_input_directory(), folder))
+def archive_path_of(archive):
+    return folder_inside(folder_paths.get_input_directory(), archive)
 
 
 class LoadNumberedImage:
-    """One picture of a folder per run, in numeric order: queue as many runs as there are
+    """One picture of a zip per run, in the order of the numbers their names end in
+    (`hero-1.png`, `hero-2.png`, ... `hero-10.png`): queue as many runs as there are
     pictures with `index` on increment."""
 
     CATEGORY = "vexel"
@@ -168,24 +169,19 @@ class LoadNumberedImage:
     def INPUT_TYPES(cls):
         return {
             "required": {
-                "folder": ("STRING", {"default": "characters",
-                                      "tooltip": "Folder inside ComfyUI's input directory."}),
+                "zip": (archives_in(folder_paths.get_input_directory()), {
+                    "tooltip": "Zip of pictures named <anything>-<number>.png, in ComfyUI's input directory."}),
                 "index": ("INT", {"default": 0, "min": 0, "max": MAXIMUM_INDEX, "control_after_generate": True,
-                                  "tooltip": "Which picture, counting from 0 in numeric order of the file names."}),
+                                  "tooltip": "Which picture, counting from 0 in the order of their numbers."}),
             }
         }
 
     @classmethod
-    def IS_CHANGED(cls, folder, index):
-        input_folder = os.path.join(folder_paths.get_input_directory(), folder)
-        if not os.path.isdir(input_folder):
-            return folder
-        return [(path, os.path.getmtime(path)) for path in picture_paths(folder)]
+    def IS_CHANGED(cls, zip, index):
+        archive_path = archive_path_of(zip)
+        return os.path.getmtime(archive_path) if os.path.isfile(archive_path) else zip
 
-    def load(self, folder, index):
-        paths = picture_paths(folder)
-        if index >= len(paths):
-            raise ValueError(f"index {index} is past the {len(paths)} pictures in {folder}, the batch is done")
-        image, mask = image_and_mask(paths[index])
-        print(f"[LoadNumberedImage] {index + 1}/{len(paths)} {paths[index]}")
-        return image, mask, stem_of(paths[index]), len(paths)
+    def load(self, zip, index):
+        image, mask, number, count, entry = numbered_picture(archive_path_of(zip), index)
+        print(f"[LoadNumberedImage] {index + 1}/{count} {zip}: {entry}")
+        return image, mask, number, count

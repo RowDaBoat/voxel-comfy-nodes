@@ -990,7 +990,7 @@
       ],
       "size": [
         340,
-        130
+        160
       ],
       "flags": {},
       "order": 9,
@@ -1031,7 +1031,7 @@
         "cnr_id": "comfyui_vox"
       },
       "widgets_values": [
-        "characters",
+        "characters.zip",
         0,
         "increment"
       ],
@@ -2016,7 +2016,7 @@
       "properties": {},
       "title": "Bulk pictures to one .vox",
       "widgets_values": [
-        "## Bulk pictures to one .vox\n1. Put numbered pictures (`1.png`, `2.png`, ... `10.png`) in a folder inside ComfyUI's `input` directory and set it as **folder**.\n2. Set **index** to `0`, leave it on `increment`.\n3. Run as many times as there are pictures (the run count next to Run). One picture is processed per run, so memory stays flat however many there are; a run past the last picture stops with an error.\n\nEach picture is saved as `output/vox/characters/<number>.vox`, and every run rewrites `output/vox/characters.vox` with all of them on a grid, sharing one palette. Re-running a picture replaces its model; use a new collection name for a new set.\n\nThe Download button fetches the multi-model file."
+        "## Bulk pictures to one .vox\n1. Zip the pictures, named `<anything>-<number>.png` (`hero-1.png`, `hero-2.png`, ... `hero-10.png`), and press **Upload zip** on Load Numbered Image.\n2. Leave **index** at `0` on `increment`; uploading a zip resets it.\n3. Run as many times as there are pictures (the run count next to Run). One picture is processed per run, so memory stays flat however many there are; a run past the last picture stops with an error.\n\nEach picture is saved as `output/vox/characters/<number>.vox`, and every run rewrites `output/vox/characters.vox` with all of them on a grid, sharing one palette. Re-running a picture replaces its model; use a new collection name for a new set.\n\nThe Download button fetches the multi-model file."
       ]
     }
   ],
@@ -2633,7 +2633,7 @@
     },
     {
       "id": 11,
-      "title": "Pictures Folder",
+      "title": "Pictures Zip",
       "bounding": [
         -5090,
         440,

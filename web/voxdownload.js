@@ -68,6 +68,52 @@ function incrementByDefault(node) {
 }
 
 
+async function uploadZip(node, file) {
+  const body = new FormData();
+  body.append("image", file);
+  body.append("overwrite", "true");
+  const response = await api.fetchApi("/upload/image", { method: "POST", body });
+  if (response.status !== 200) {
+    alert(`Uploading ${file.name} failed: ${response.status} ${response.statusText}`);
+    return;
+  }
+  const uploaded = await response.json();
+  const value = uploaded.subfolder ? `${uploaded.subfolder}/${uploaded.name}` : uploaded.name;
+  selectZip(node, value);
+}
+
+
+function selectZip(node, value) {
+  const zipWidget = node.widgets.find(widget => widget.name === "zip");
+  if (!zipWidget.options.values.includes(value)) {
+    zipWidget.options.values.push(value);
+  }
+  zipWidget.value = value;
+  const index = node.widgets.find(widget => widget.name === "index");
+  index.value = 0;
+  node.setDirtyCanvas(true, true);
+}
+
+
+function chooseZip(node) {
+  const chooser = document.createElement("input");
+  chooser.type = "file";
+  chooser.accept = ".zip,application/zip";
+  chooser.addEventListener("change", () => {
+    if (chooser.files.length > 0) {
+      uploadZip(node, chooser.files[0]);
+    }
+  });
+  chooser.click();
+}
+
+
+function addUploadButton(node) {
+  const button = node.addWidget("button", "Upload zip", null, () => chooseZip(node));
+  button.serialize = false;
+}
+
+
 app.registerExtension({
   name: "vexel.LoadNumberedImage.increment",
 
@@ -80,6 +126,7 @@ app.registerExtension({
     nodeType.prototype.onNodeCreated = function () {
       onNodeCreated?.apply(this, arguments);
       incrementByDefault(this);
+      addUploadButton(this);
     };
   },
 });
