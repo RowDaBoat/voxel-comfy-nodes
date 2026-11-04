@@ -3,6 +3,7 @@ import { api } from "../../scripts/api.js";
 
 
 const NODE_TYPES = new Set(["SaveVoxelsAsVox", "SaveVoxelsToVoxCollection"]);
+const LOADER_TYPE = "LoadNumberedImage";
 const HISTORY_LENGTH = 64;
 
 
@@ -57,6 +58,31 @@ function addDownloadButton(node) {
   node.downloadButton = node.addWidget("button", "Download .vox", null, () => downloadLatest(node));
   node.downloadButton.serialize = false;
 }
+
+
+function incrementByDefault(node) {
+  const control = node.widgets?.find(widget => widget.name === "control_after_generate");
+  if (control) {
+    control.value = "increment";
+  }
+}
+
+
+app.registerExtension({
+  name: "vexel.LoadNumberedImage.increment",
+
+  beforeRegisterNodeDef(nodeType, nodeData) {
+    if (nodeData.name !== LOADER_TYPE) {
+      return;
+    }
+
+    const onNodeCreated = nodeType.prototype.onNodeCreated;
+    nodeType.prototype.onNodeCreated = function () {
+      onNodeCreated?.apply(this, arguments);
+      incrementByDefault(this);
+    };
+  },
+});
 
 
 app.registerExtension({
