@@ -1,11 +1,15 @@
 # comfyui_vox
-ComfyUI node that saves a native `VOXEL` (TRELLIS.2 and Pixal3D structures or texture voxels) as a MagicaVoxel `.vox` file.
+ComfyUI nodes that save a native `VOXEL` (TRELLIS.2 and Pixal3D structures or texture voxels) as MagicaVoxel `.vox` files, one model per file or many models in one.
 
 
 ## Install
 Copy this directory into `ComfyUI/custom_nodes/` and restart ComfyUI.
-The node appears as **Save Voxels as .vox** under the `vexel` category, files land in `ComfyUI/output/vox/`.
-The node has a **Download** button that fetches its latest file to the machine running the browser.
+The nodes appear under the `vexel` category:
+- **Save Voxels as .vox**: one model per file, saved to `ComfyUI/output/vox/`.
+- **Save Voxels to Multi-Model .vox**: adds a model to a collection and rewrites the collection's multi-model file.
+- **Load Numbered Image**: one picture of a folder per run, in numeric order.
+
+Both save nodes have a **Download** button that fetches their latest file to the machine running the browser.
 
 
 ## Wiring
@@ -16,6 +20,24 @@ The node has a **Download** button that fetches its latest file to the machine r
 ComfyUI lists it under the templates of this node pack.
 
 
+## Bulk
+`example_workflows/trellis2_images_to_multi_model_vox.json` turns a folder of numbered pictures into one `.vox`:
+1. Put the pictures (`1.png`, `2.png`, ... `10.png`) in a folder inside `ComfyUI/input/`, and set it as the loader's `folder`.
+2. Set `index` to `0`, on `increment`.
+3. Run as many times as there are pictures.
+
+Each run processes one picture end to end, so memory stays flat however many there are, and a run past the last picture stops with an error.
+The model is saved as `output/<collection>/<picture name>.vox`, then `output/<collection>.vox` is rewritten with every model of the collection: named after its picture, on a grid standing on z = 0, all sharing one palette of `colors`.
+A picture run again replaces its model; a new set of pictures wants a new `collection`.
+
+Pictures can be uploaded from another machine through ComfyUI's API:
+```sh
+for picture in pictures/*.png; do
+  curl -F "image=@$picture" -F subfolder=characters http://<host>:8188/upload/image
+done
+```
+
+
 ## Inputs
 - `up_axis`: texture voxels and Pixal3D structures are `y`, TRELLIS.2 structures are `z`.
 - `maximum_size`: voxels along the longest axis, larger inputs are downsampled and their colors averaged, 256 at most.
@@ -23,6 +45,9 @@ ComfyUI lists it under the templates of this node pack.
 - `fallback_color`: `#rrggbb` used when the voxel carries no colors.
 - `threshold`: dense grids keep cells above it.
 - `batch_index`: which batch entry to save.
+- `name` (multi-model): the model's name, wired from the loader; empty numbers it after the collection's models.
+- `collection` (multi-model): where the models and the multi-model file go, inside the output directory.
+- `spacing` (multi-model): empty voxels between models.
 
 
 ## Tests

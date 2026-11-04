@@ -2,12 +2,12 @@ import { app } from "../../scripts/app.js";
 import { api } from "../../scripts/api.js";
 
 
-const NODE_TYPE = "SaveVoxelsAsVox";
+const NODE_TYPES = new Set(["SaveVoxelsAsVox", "SaveVoxelsToVoxCollection"]);
 const HISTORY_LENGTH = 64;
 
 
 function viewUrlOf(voxFile) {
-  const query = new URLSearchParams(voxFile);
+  const query = new URLSearchParams({ ...voxFile, rand: Math.random() });
   return api.apiURL(`/view?${query}`);
 }
 
@@ -23,7 +23,7 @@ function download(voxFile) {
 
 
 function voxFileOfEntry(entry, nodeId) {
-  const isSaveNode = entry.prompt?.[2]?.[nodeId]?.class_type === NODE_TYPE;
+  const isSaveNode = NODE_TYPES.has(entry.prompt?.[2]?.[nodeId]?.class_type);
   return isSaveNode ? entry.outputs?.[nodeId]?.vox_files?.[0] : undefined;
 }
 
@@ -63,7 +63,7 @@ app.registerExtension({
   name: "vexel.SaveVoxelsAsVox.download",
 
   beforeRegisterNodeDef(nodeType, nodeData) {
-    if (nodeData.name !== NODE_TYPE) {
+    if (!NODE_TYPES.has(nodeData.name)) {
       return;
     }
 
