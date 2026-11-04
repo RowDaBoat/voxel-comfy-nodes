@@ -117,6 +117,11 @@ class VoxTests(unittest.TestCase):
         self.assertEqual(size, (1, 2, 1))
         self.assertEqual(len(voxels), 2)
 
+    def test_saved_file_is_reported_for_download(self):
+        result = self.nodes.SaveVoxelsAsVox().save(FakeVoxel(sphere_grid(8, 3)), "test", "z", 64, 64,
+                                                   "#ff8000", 0.5, 0)
+        self.assertEqual(result["ui"]["vox_files"], [{"filename": "test_00001_.vox", "subfolder": "", "type": "output"}])
+
     def test_empty_structure_is_rejected(self):
         with self.assertRaises(ValueError):
             self.save(FakeVoxel(torch.zeros(1, 8, 8, 8)))

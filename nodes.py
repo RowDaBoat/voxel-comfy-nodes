@@ -13,10 +13,11 @@ UP_AXIS_TOOLTIP = (
 )
 
 
-def next_output_path(filename_prefix):
+def next_output_file(filename_prefix):
     output_directory = folder_paths.get_output_directory()
-    folder, filename, counter, _, _ = folder_paths.get_save_image_path(filename_prefix, output_directory)
-    return os.path.join(folder, f"{filename}_{counter:05}_.vox")
+    folder, filename, counter, subfolder, _ = folder_paths.get_save_image_path(filename_prefix, output_directory)
+    vox_filename = f"{filename}_{counter:05}_.vox"
+    return os.path.join(folder, vox_filename), {"filename": vox_filename, "subfolder": subfolder, "type": "output"}
 
 
 def palette_and_indices(cell_colors, color_count, fallback_color):
@@ -63,8 +64,8 @@ class SaveVoxelsAsVox:
         oriented = rotated_to_z_up(coordinates) if up_axis == "y" else coordinates
         cells, cell_colors = fitted(oriented, base_colors, maximum_size)
         palette, indices = palette_and_indices(cell_colors, colors, fallback_color)
-        path = next_output_path(filename_prefix)
+        path, vox_file = next_output_file(filename_prefix)
         write_vox(path, size_of(cells), vox_voxels(cells, indices), palette)
         summary = f"{cells.shape[0]} voxels, size {size_of(cells)}, {len(palette)} colors, saved to {path}"
         print(f"[SaveVoxelsAsVox] {summary}")
-        return {"ui": {"text": [summary]}}
+        return {"ui": {"text": [summary], "vox_files": [vox_file]}}
