@@ -339,5 +339,114 @@ class LoaderTests(unittest.TestCase):
             self.load("../escaped.zip", 0)
 
 
+class GridPlacementTests(unittest.TestCase):
+    def setUp(self):
+        self.directory = tempfile.mkdtemp()
+        sys.modules["folder_paths"] = fake_folder_paths(self.directory)
+        self.nodes = importlib.import_module("comfyui_vox.nodes")
+        self.nodes.folder_paths = sys.modules["folder_paths"]
+
+    def save(self, voxel, **overrides):
+        options = dict(filename_prefix="test", up_axis="y", maximum_size=64, colors=64,
+                       fallback_color="#ff8000", threshold=0.5, batch_index=0, placement="grid")
+        options.update(overrides)
+        self.nodes.SaveVoxelsAsVox().save(voxel, **options)
+        path = os.path.join(self.directory, "test_00001_.vox")
+        result = read_vox(path)
+        os.remove(path)
+        return result
+
+    def test_models_keep_their_place_in_the_grid(self):
+        size, voxels, _ = self.save(FakeVoxel(torch.tensor([[0, 512, 1000, 256]]), None, 1024))
+        self.assertEqual(size, (64, 64, 64))
+        self.assertEqual([voxel[:3] for voxel in voxels], [(32, 47, 62)])
+
+    def test_differently_shaped_models_share_one_size(self):
+        small, _, _ = self.save(FakeVoxel(torch.tensor([[0, 10, 10, 10]]), None, 256))
+        large, _, _ = self.save(FakeVoxel(torch.tensor([[0, 10, 10, 10], [0, 200, 200, 200]]), None, 256))
+        self.assertEqual(small, large)
+
+    def test_dense_structures_scale_from_their_grid(self):
+        grid = torch.zeros(1, 32, 32, 32)
+        grid[0, 31, 0, 0] = 1
+        size, voxels, _ = self.save(FakeVoxel(grid), up_axis="z")
+        self.assertEqual(size, (32, 32, 32))
+        self.assertEqual(voxels[0][:3], (31, 0, 0))
+
+
+def view_png_bytes(left, top, width, height, size=(10, 8)):
+    from PIL import Image
+    picture = Image.new("RGBA", size, (0, 0, 0, 0))
+    for x in range(left, left + width):
+        for y in range(top, top + height):
+            picture.putpixel((x, y), (255, 255, 255, 255))
+    output = io.BytesIO()
+    picture.save(output, format="PNG")
+    return output.getvalue()
+
+
+class ViewLoaderTests(unittest.TestCase):
+    def setUp(self):
+        self.directory = tempfile.mkdtemp()
+        sys.modules["folder_paths"] = fake_folder_paths(self.directory)
+        self.nodes = importlib.import_module("comfyui_vox.nodes")
+        self.nodes.folder_paths = sys.modules["folder_paths"]
+        os.makedirs(os.path.join(self.directory, "input"))
+
+    def write_zip(self, name, entries):
+        with zipfile.ZipFile(os.path.join(self.directory, "input", name), "w") as archive:
+            for entry, content in entries.items():
+                archive.writestr(entry, content)
+
+    def load(self, archive, index):
+        return self.nodes.LoadNumberedViews().load(archive, index, True)["result"]
+
+    def write_run(self):
+        self.write_zip("run.zip", {
+            "girl-run-left-2.png": view_png_bytes(4, 2, 2, 4),
+            "girl-run-left-1.png": view_png_bytes(2, 2, 2, 4),
+            "front/girl-run-1.png": view_png_bytes(1, 0, 3, 6),
+            "front/girl-run-2.png": view_png_bytes(1, 1, 3, 6),
+        })
+
+    def test_frames_come_in_order_with_their_views(self):
+        self.write_run()
+        front, left, back, right, name, count = self.load("run.zip", 1)
+        self.assertEqual((name, count), ("2", 2))
+        self.assertIsNotNone(front)
+        self.assertIsNotNone(left)
+        self.assertIsNone(back)
+        self.assertIsNone(right)
+
+    def test_every_view_and_frame_share_one_square(self):
+        self.write_run()
+        first = self.load("run.zip", 0)
+        second = self.load("run.zip", 1)
+        shapes = {tuple(image.shape) for image in (*first[:2], *second[:2])}
+        self.assertEqual(shapes, {(1, 8, 8, 3)})
+
+    def test_the_animation_keeps_its_place_in_the_square(self):
+        self.write_run()
+        first_left = self.load("run.zip", 0)[1][0, :, :, 0]
+        second_left = self.load("run.zip", 1)[1][0, :, :, 0]
+        first_columns = first_left.amax(dim=0).nonzero().flatten().tolist()
+        second_columns = second_left.amax(dim=0).nonzero().flatten().tolist()
+        self.assertEqual(second_columns[0] - first_columns[0], 2)
+
+    def test_frames_missing_a_view_are_refused(self):
+        self.write_zip("gap.zip", {
+            "girl-left-1.png": view_png_bytes(2, 2, 2, 4),
+            "girl-left-2.png": view_png_bytes(2, 2, 2, 4),
+            "girl-front-1.png": view_png_bytes(2, 2, 2, 4),
+        })
+        with self.assertRaises(ValueError):
+            self.load("gap.zip", 0)
+
+    def test_pictures_without_a_view_are_refused(self):
+        self.write_zip("plain.zip", {"girl-1.png": view_png_bytes(2, 2, 2, 4)})
+        with self.assertRaises(ValueError):
+            self.load("plain.zip", 0)
+
+
 if __name__ == "__main__":
     unittest.main()

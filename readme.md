@@ -8,6 +8,7 @@ The nodes appear under the `vexel` category:
 - **Save Voxels as .vox**: one model per file, saved to `ComfyUI/output/vox/`.
 - **Save Voxels to Multi-Model .vox**: adds a model to a collection and rewrites the collection's multi-model file.
 - **Load Numbered Image**: one picture of an uploaded zip per run, in the order of their numbers.
+- **Load Numbered Views**: every view of one frame of an uploaded zip per run, framed for Pixal3D Multi-View Conditioning.
 
 Both save nodes have a **Download** button that fetches their latest file to the machine running the browser.
 
@@ -40,6 +41,16 @@ curl -F "image=@heroes.zip" -F overwrite=true http://<host>:8188/upload/image
 ```
 
 
+## Multi-view
+`example_workflows/pixal3d_multiview_frames_to_vox.json` generates each frame from several views of it, so the frames hold together from every angle, not only the one they were drawn from:
+1. Zip every view of every frame as `<anything>-<view>-<number>.png`, or inside `front/`, `left/`, `back/` and `right/` folders. Use 2 to 4 views, the same ones in every frame, with the background in alpha and the same pixel scale in every picture.
+2. Press **Upload zip** on Load Numbered Views and press **Run** once.
+
+Load Numbered Views frames the views the way Pixal3D's rig expects, 90 degrees apart around the subject: one square side for every view and frame, the widest extent of the whole animation filling 1/1.1 of it, every view at the same height, each centered on where the subject moves in it.
+Sharing the framing across frames keeps their scale and position, which per-frame cropping would lose.
+Both save nodes use `placement: grid` for the same reason.
+
+
 ## Inputs
 - `up_axis`: texture voxels and Pixal3D structures are `y`, TRELLIS.2 structures are `z`.
 - `maximum_size`: voxels along the longest axis, larger inputs are downsampled and their colors averaged, 256 at most.
@@ -50,6 +61,7 @@ curl -F "image=@heroes.zip" -F overwrite=true http://<host>:8188/upload/image
 - `name` (multi-model): the model's name, wired from the loader; empty numbers it after the collection's models.
 - `collection` (multi-model): where the models and the multi-model file go, inside the output directory.
 - `spacing` (multi-model): empty voxels between models.
+- `placement`: `fit` crops each model to its own bounds; `grid` keeps it in place in TRELLIS's grid, every model the same size, so the frames of an animation line up.
 
 
 ## Tests

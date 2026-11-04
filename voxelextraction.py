@@ -38,6 +38,25 @@ def rotated_to_z_up(coordinates):
     return torch.stack((x, -z, y), dim=1)
 
 
+def rotated_to_z_up_in_grid(coordinates, resolution):
+    """The same rotation, kept inside the `resolution` grid: undoes the decoder's
+    `(x, y, z) -> (x, z, R - 1 - y)`."""
+    x, y, z = coordinates.unbind(dim=1)
+    return torch.stack((x, resolution - 1 - z, y), dim=1)
+
+
+def grid_resolution_of(voxel):
+    """The side of the grid TRELLIS generated in: dense grids are that size, sparse
+    voxels carry it, or it is the smallest power of two holding them."""
+    data = voxel.data
+    if data.dim() == 4:
+        return data.shape[-1]
+    if voxel.resolution is not None:
+        return int(voxel.resolution)
+    extent = int(data[:, -3:].max().item()) + 1
+    return 1 << max(0, (extent - 1).bit_length())
+
+
 def averaged(colors, cell_indices, cell_count):
     if colors is None:
         return None
@@ -59,3 +78,19 @@ def fitted(coordinates, colors, maximum_size):
 
 def size_of(cells):
     return tuple((cells.max(dim=0).values + 1).tolist())
+
+
+def placed_in_grid(coordinates, colors, maximum_size, resolution):
+    """Cells of a `maximum_size` grid scaled from the whole TRELLIS grid, so models of
+    different pictures keep their place relative to each other."""
+    scale = min(1.0, maximum_size / resolution)
+    cells = torch.floor(coordinates.float() * scale).long().clamp(0, maximum_size - 1)
+    if cells.shape[0] == 0:
+        raise ValueError("no occupied voxels, try lowering the threshold")
+    unique_cells, cell_indices = torch.unique(cells, dim=0, return_inverse=True)
+    return unique_cells, averaged(colors, cell_indices, unique_cells.shape[0])
+
+
+def grid_size_of(maximum_size, resolution):
+    side = min(maximum_size, resolution)
+    return (side, side, side)

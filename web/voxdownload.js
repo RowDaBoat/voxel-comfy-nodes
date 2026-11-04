@@ -3,7 +3,7 @@ import { api } from "../../scripts/api.js";
 
 
 const NODE_TYPES = new Set(["SaveVoxelsAsVox", "SaveVoxelsToVoxCollection"]);
-const LOADER_TYPE = "LoadNumberedImage";
+const LOADER_TYPES = new Set(["LoadNumberedImage", "LoadNumberedViews"]);
 const HISTORY_LENGTH = 64;
 
 
@@ -143,7 +143,7 @@ app.registerExtension({
   name: "vexel.LoadNumberedImage.increment",
 
   beforeRegisterNodeDef(nodeType, nodeData) {
-    if (nodeData.name !== LOADER_TYPE) {
+    if (!LOADER_TYPES.has(nodeData.name)) {
       return;
     }
 

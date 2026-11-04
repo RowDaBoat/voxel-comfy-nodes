@@ -3,11 +3,13 @@ import os
 import folder_paths
 
 from .imageloading import archives_in, numbered_picture
+from .viewloading import VIEW_NAMES, numbered_views
 from .naming import folder_inside, safe_name
 from .palettequantization import quantized, palette_of
 from .vox import write_vox, single_color_palette
 from .voxcollection import write_collection
-from .voxelextraction import voxel_points, rotated_to_z_up, fitted, size_of
+from .voxelextraction import (voxel_points, rotated_to_z_up, rotated_to_z_up_in_grid, fitted, size_of,
+                              grid_resolution_of, placed_in_grid, grid_size_of)
 
 
 UP_AXIS_TOOLTIP = (
@@ -17,6 +19,10 @@ UP_AXIS_TOOLTIP = (
 
 
 MAXIMUM_INDEX = 99999
+PLACEMENT_TOOLTIP = (
+    "fit: the model is cropped to its own bounds. grid: the model keeps its place in TRELLIS's grid "
+    "and every model is the same size, so frames of an animation line up."
+)
 
 
 def voxel_options():
@@ -34,10 +40,29 @@ def voxel_options():
     }
 
 
-def voxel_cells(voxel, up_axis, maximum_size, threshold, batch_index):
+def placement_option():
+    return {"placement": (["fit", "grid"], {"tooltip": PLACEMENT_TOOLTIP})}
+
+
+def fitted_cells(voxel, up_axis, maximum_size, threshold, batch_index):
     coordinates, base_colors = voxel_points(voxel, batch_index, threshold)
     oriented = rotated_to_z_up(coordinates) if up_axis == "y" else coordinates
-    return fitted(oriented, base_colors, maximum_size)
+    cells, cell_colors = fitted(oriented, base_colors, maximum_size)
+    return cells, cell_colors, size_of(cells)
+
+
+def grid_cells(voxel, up_axis, maximum_size, threshold, batch_index):
+    coordinates, base_colors = voxel_points(voxel, batch_index, threshold)
+    resolution = grid_resolution_of(voxel)
+    oriented = rotated_to_z_up_in_grid(coordinates, resolution) if up_axis == "y" else coordinates
+    cells, cell_colors = placed_in_grid(oriented, base_colors, maximum_size, resolution)
+    return cells, cell_colors, grid_size_of(maximum_size, resolution)
+
+
+def voxel_cells(voxel, up_axis, maximum_size, threshold, batch_index, placement="fit"):
+    """Cells, their averaged colors, and the model size."""
+    cells_of = grid_cells if placement == "grid" else fitted_cells
+    return cells_of(voxel, up_axis, maximum_size, threshold, batch_index)
 
 
 def saved_file_of(path):
@@ -82,15 +107,17 @@ class SaveVoxelsAsVox:
                 "voxel": ("VOXEL",),
                 "filename_prefix": ("STRING", {"default": "vox/trellis"}),
                 **voxel_options(),
-            }
+            },
+            "optional": placement_option(),
         }
 
-    def save(self, voxel, filename_prefix, up_axis, maximum_size, colors, fallback_color, threshold, batch_index):
-        cells, cell_colors = voxel_cells(voxel, up_axis, maximum_size, threshold, batch_index)
+    def save(self, voxel, filename_prefix, up_axis, maximum_size, colors, fallback_color, threshold, batch_index,
+             placement="fit"):
+        cells, cell_colors, size = voxel_cells(voxel, up_axis, maximum_size, threshold, batch_index, placement)
         palette, indices = palette_and_indices(cell_colors, colors, fallback_color)
         path, vox_file = next_output_file(filename_prefix)
-        write_vox(path, size_of(cells), vox_voxels(cells, indices), palette)
-        summary = f"{cells.shape[0]} voxels, size {size_of(cells)}, {len(palette)} colors, saved to {path}"
+        write_vox(path, size, vox_voxels(cells, indices), palette)
+        summary = f"{cells.shape[0]} voxels, size {size}, {len(palette)} colors, saved to {path}"
         print(f"[SaveVoxelsAsVox] {summary}")
         return {"ui": {"text": [summary], "vox_files": [vox_file]}}
 
@@ -133,19 +160,20 @@ class SaveVoxelsToVoxCollection:
                 **voxel_options(),
                 "spacing": ("INT", {"default": 8, "min": 0, "max": 256,
                                     "tooltip": "Empty voxels between models in the multi-model file."}),
-            }
+            },
+            "optional": placement_option(),
         }
 
     def save(self, voxel, name, collection, up_axis, maximum_size, colors, fallback_color, threshold,
-             batch_index, spacing):
+             batch_index, spacing, placement="fit"):
         models_folder, collection_path = collection_paths(collection)
         os.makedirs(models_folder, exist_ok=True)
         model_name = safe_name(name, next_model_name(models_folder))
-        cells, cell_colors = voxel_cells(voxel, up_axis, maximum_size, threshold, batch_index)
+        cells, cell_colors, size = voxel_cells(voxel, up_axis, maximum_size, threshold, batch_index, placement)
         palette, indices = palette_and_indices(cell_colors, colors, fallback_color)
-        write_vox(os.path.join(models_folder, f"{model_name}.vox"), size_of(cells), vox_voxels(cells, indices), palette)
+        write_vox(os.path.join(models_folder, f"{model_name}.vox"), size, vox_voxels(cells, indices), palette)
         models, shared_palette = write_collection(models_folder, collection_path, colors, spacing)
-        summary = (f"{model_name}: {cells.shape[0]} voxels, size {size_of(cells)}. "
+        summary = (f"{model_name}: {cells.shape[0]} voxels, size {size}. "
                    f"{collection_path} holds {len(models)} models sharing {len(shared_palette)} colors")
         print(f"[SaveVoxelsToVoxCollection] {summary}")
         return {"ui": {"text": [summary], "vox_files": [saved_file_of(collection_path)]}}
@@ -196,3 +224,47 @@ class LoadNumberedImage:
         print(f"[LoadNumberedImage] {index + 1}/{count} {zip}: {entry}")
         picture = {"index": index, "count": count, "whole_zip": whole_zip}
         return {"ui": {"picture": [picture]}, "result": (image, foreground, number, count, remove_background)}
+
+
+class LoadNumberedViews:
+    """One frame of a zip per run, every view of it framed for Pixal3D Multi-View Conditioning.
+    Pictures are named `<anything>-<number>.png` with `front`, `left`, `back` or `right` in their
+    name or folder, and every frame has the same views."""
+
+    CATEGORY = "vexel"
+    RETURN_TYPES = ("IMAGE", "IMAGE", "IMAGE", "IMAGE", "STRING", "INT")
+    RETURN_NAMES = (*VIEW_NAMES, "name", "count")
+    OUTPUT_TOOLTIPS = (
+        *(f"The {view} view on black, framed like every other view and frame; nothing when the zip has none."
+          for view in VIEW_NAMES),
+        "The frame's number.",
+        "How many frames the zip holds.",
+    )
+    FUNCTION = "load"
+
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "zip": (archives_in(folder_paths.get_input_directory()), {
+                    "tooltip": "Zip of pictures named <anything>-<view>-<number>.png, or in front/left/back/right "
+                               "folders, in ComfyUI's input directory."}),
+                "index": ("INT", {"default": 0, "min": 0, "max": MAXIMUM_INDEX, "control_after_generate": True,
+                                  "tooltip": "Which frame, counting from 0 in the order of their numbers."}),
+                "whole_zip": ("BOOLEAN", {"default": True, "tooltip": (
+                    "Queue the next frame after each run, until the zip is done. "
+                    "Off, each Run does one frame.")}),
+            }
+        }
+
+    @classmethod
+    def IS_CHANGED(cls, zip, index, whole_zip):
+        archive_path = archive_path_of(zip)
+        return os.path.getmtime(archive_path) if os.path.isfile(archive_path) else zip
+
+    def load(self, zip, index, whole_zip):
+        views, number, count = numbered_views(archive_path_of(zip), index)
+        print(f"[LoadNumberedViews] {index + 1}/{count} {zip}: frame {number}, {', '.join(views)}")
+        picture = {"index": index, "count": count, "whole_zip": whole_zip}
+        images = tuple(views.get(view) for view in VIEW_NAMES)
+        return {"ui": {"picture": [picture]}, "result": (*images, number, count)}
