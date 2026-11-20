@@ -3,7 +3,7 @@ import os
 import folder_paths
 
 from .imageloading import archives_in, numbered_picture
-from .viewloading import VIEW_NAMES, framed_front_and_side, numbered_views
+from .viewloading import VIEW_NAMES, framed_views, numbered_views
 from .naming import folder_inside, safe_name
 from .palettequantization import quantized, palette_of
 from .vox import write_vox, single_color_palette
@@ -272,12 +272,13 @@ class LoadNumberedViews:
 
 class FrameFrontAndSideViews:
     CATEGORY = "vexel"
-    RETURN_TYPES = ("IMAGE", "IMAGE", "IMAGE")
-    RETURN_NAMES = ("front", "left", "right")
+    RETURN_TYPES = ("IMAGE", "IMAGE", "IMAGE", "IMAGE")
+    RETURN_NAMES = ("front", "left", "right", "back")
     OUTPUT_TOOLTIPS = (
         "The front view on black, framed for Pixal3D Multi-View Conditioning.",
         "The side view when the subject faces left in it, nothing otherwise.",
         "The side view when the subject faces right in it, nothing otherwise.",
+        "The back view, nothing when no back picture is connected.",
     )
     FUNCTION = "frame"
 
@@ -291,12 +292,20 @@ class FrameFrontAndSideViews:
                 "side_mask": ("MASK", {"tooltip": "Load Image's mask of the side picture, from its alpha."}),
                 "side_faces": (["left", "right"], {
                     "tooltip": "Which way the subject faces in the side picture, choosing Pixal3D's left or right view."}),
-            }
+            },
+            "optional": {
+                "back": ("IMAGE", {"tooltip": "The subject from behind, at the same pixel scale as the front."}),
+                "back_mask": ("MASK", {"tooltip": "Load Image's mask of the back picture, from its alpha."}),
+            },
         }
 
-    def frame(self, front, front_mask, side, side_mask, side_faces):
-        framed_front, framed_side = framed_front_and_side(front, front_mask, side, side_mask)
-        print(f"[FrameFrontAndSideViews] {framed_front.shape[1]}px square, side facing {side_faces}")
-        if side_faces == "left":
-            return framed_front, framed_side, None
-        return framed_front, None, framed_side
+    def frame(self, front, front_mask, side, side_mask, side_faces, back=None, back_mask=None):
+        pictures = {"front": (front, front_mask), "side": (side, side_mask)}
+        if back is not None:
+            pictures["back"] = (back, back_mask)
+        views = framed_views(pictures)
+        print(f"[FrameFrontAndSideViews] {views['front'].shape[1]}px square, {', '.join(views)}, "
+              f"side facing {side_faces}")
+        left = views["side"] if side_faces == "left" else None
+        right = views["side"] if side_faces == "right" else None
+        return views["front"], left, right, views.get("back")

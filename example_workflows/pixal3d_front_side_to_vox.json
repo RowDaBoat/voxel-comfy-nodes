@@ -1,8 +1,8 @@
 {
   "id": "aa77013b-18f1-4679-9678-6d455d3536c5",
   "revision": 0,
-  "last_node_id": 331,
-  "last_link_id": 1313,
+  "last_node_id": 332,
+  "last_link_id": 1316,
   "nodes": [
     {
       "id": 3,
@@ -1090,7 +1090,7 @@
           "name": "back",
           "shape": 7,
           "type": "IMAGE",
-          "link": null
+          "link": 1316
         },
         {
           "name": "right",
@@ -1472,14 +1472,14 @@
     {
       "id": 329,
       "type": "FrameFrontAndSideViews",
-      "title": "Frame Front and Side Views",
+      "title": "Frame Front, Side and Back Views",
       "pos": [
         -4700,
         760
       ],
       "size": [
         340,
-        170
+        210
       ],
       "inputs": [
         {
@@ -1501,6 +1501,18 @@
           "name": "side_mask",
           "type": "MASK",
           "link": 1309
+        },
+        {
+          "name": "back",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": 1314
+        },
+        {
+          "name": "back_mask",
+          "shape": 7,
+          "type": "MASK",
+          "link": 1315
         }
       ],
       "outputs": [
@@ -1523,6 +1535,13 @@
           "type": "IMAGE",
           "links": [
             1312
+          ]
+        },
+        {
+          "name": "back",
+          "type": "IMAGE",
+          "links": [
+            1316
           ]
         }
       ],
@@ -1578,24 +1597,65 @@
     {
       "id": 331,
       "type": "MarkdownNote",
-      "title": "Front and side to .vox",
+      "title": "Front, side and back to .vox",
       "pos": [
         -5080,
         90
       ],
       "size": [
         520,
-        330
+        360
       ],
       "inputs": [],
       "outputs": [],
       "properties": {},
       "widgets_values": [
-        "## Front and side to .vox\n1. Upload the front picture on **Front View** and the profile on **Side View**, both with the background in alpha and at the same pixel scale.\n2. Set **side_faces** on Frame Front and Side Views to the way the subject faces in the side picture.\n3. Set **maximum_size** on **Save Voxel Model**: the voxels along the model's longest axis.\n4. Press **Run**, then **Download** on Save Voxel Model.\n\nThe model is cropped to its bounds and saved as `output/vox/front-side_#####_.vox`. maximum_size only scales down: past TRELLIS's own resolution the model stays at that resolution, raise Trellis2UpsampleStage's resolution for more voxels."
+        "## Front, side and back to .vox\n1. Upload the front picture on **Front View**, the profile on **Side View** and the subject from behind on **Back View**, all with the background in alpha and at the same pixel scale.\n2. Set **side_faces** on the framing node to the way the subject faces in the side picture.\n3. Set **maximum_size** on **Save Voxel Model**: the voxels along the model's longest axis.\n4. Press **Run**, then **Download** on Save Voxel Model.\n\nNo back picture? Select **Back View** and bypass it with Ctrl+B.\n\nThe model is cropped to its bounds and saved as `output/vox/front-side_#####_.vox`. maximum_size only scales down: past TRELLIS's own resolution the model stays at that resolution, raise Trellis2UpsampleStage's resolution for more voxels."
       ],
       "flags": {},
       "order": 0,
       "mode": 0
+    },
+    {
+      "id": 332,
+      "type": "LoadImage",
+      "title": "Back View",
+      "pos": [
+        -5080,
+        1250
+      ],
+      "size": [
+        320,
+        330
+      ],
+      "flags": {},
+      "order": 0,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            1314
+          ]
+        },
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": [
+            1315
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "LoadImage",
+        "cnr_id": "comfy-core"
+      },
+      "widgets_values": [
+        "back.png",
+        "image"
+      ]
     }
   ],
   "links": [
@@ -2030,6 +2090,30 @@
       330,
       0,
       "VOXEL"
+    ],
+    [
+      1314,
+      332,
+      0,
+      329,
+      4,
+      "IMAGE"
+    ],
+    [
+      1315,
+      332,
+      1,
+      329,
+      5,
+      "MASK"
+    ],
+    [
+      1316,
+      329,
+      3,
+      298,
+      3,
+      "IMAGE"
     ]
   ],
   "groups": [
@@ -2071,12 +2155,12 @@
     },
     {
       "id": 11,
-      "title": "Front and Side",
+      "title": "Front, Side and Back",
       "bounding": [
         -5090,
         440,
         770,
-        860
+        1230
       ],
       "color": "#3f789e",
       "flags": {}

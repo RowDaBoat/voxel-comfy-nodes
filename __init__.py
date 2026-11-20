@@ -13,6 +13,6 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "SaveVoxelsToVoxCollection": "Save Voxels to Multi-Model .vox",
     "LoadNumberedImage": "Load Numbered Image",
     "LoadNumberedViews": "Load Numbered Views",
-    "FrameFrontAndSideViews": "Frame Front and Side Views",
+    "FrameFrontAndSideViews": "Frame Front, Side and Back Views",
 }
 WEB_DIRECTORY = "./web"

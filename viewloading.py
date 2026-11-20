@@ -162,9 +162,8 @@ def premultiplied_image(image, mask, name):
     return pixels * alpha[..., None], alpha
 
 
-def framed_front_and_side(front, front_mask, side, side_mask):
-    pictures = {"front": premultiplied_image(front, front_mask, "front"),
-                "side": premultiplied_image(side, side_mask, "side")}
-    framing = square_framing({name: bounds_of(alpha) for name, (_, alpha) in pictures.items()})
-    return tuple(torch.from_numpy(cropped(pictures[name][0], *framing[name])).unsqueeze(0)
-                 for name in ("front", "side"))
+def framed_views(pictures):
+    premultiplied = {name: premultiplied_image(image, mask, name) for name, (image, mask) in pictures.items()}
+    framing = square_framing({name: bounds_of(alpha) for name, (_, alpha) in premultiplied.items()})
+    return {name: torch.from_numpy(cropped(pixels, *framing[name])).unsqueeze(0)
+            for name, (pixels, _) in premultiplied.items()}

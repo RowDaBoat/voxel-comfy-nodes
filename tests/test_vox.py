@@ -464,21 +464,22 @@ class FrontAndSideTests(unittest.TestCase):
         sys.modules["folder_paths"] = fake_folder_paths(tempfile.mkdtemp())
         self.nodes = importlib.import_module("comfyui_vox.nodes")
 
-    def frame(self, side_faces, front=None, side=None):
+    def frame(self, side_faces, front=None, side=None, back=(None, None)):
         front_image, front_mask = front or loaded_image(20, 20, 6, 2, 14, 18)
         side_image, side_mask = side or loaded_image(20, 20, 2, 4, 12, 18)
-        return self.nodes.FrameFrontAndSideViews().frame(front_image, front_mask, side_image, side_mask, side_faces)
+        return self.nodes.FrameFrontAndSideViews().frame(front_image, front_mask, side_image, side_mask, side_faces,
+                                                         *back)
 
     def test_the_side_goes_to_the_view_it_faces(self):
-        front, left, right = self.frame("left")
+        front, left, right, _ = self.frame("left")
         self.assertIsNotNone(left)
         self.assertIsNone(right)
-        front, left, right = self.frame("right")
+        front, left, right, _ = self.frame("right")
         self.assertIsNone(left)
         self.assertIsNotNone(right)
 
     def test_both_views_share_one_square_at_one_height(self):
-        front, left, _ = self.frame("left")
+        front, left, _, _ = self.frame("left")
         self.assertEqual(tuple(front.shape), (1, 18, 18, 3))
         self.assertEqual(tuple(left.shape), (1, 18, 18, 3))
         front_rows = torch.nonzero(front[0].sum(dim=(1, 2)))[:, 0]
@@ -486,16 +487,32 @@ class FrontAndSideTests(unittest.TestCase):
         self.assertEqual(int(front_rows.max()), int(side_rows.max()))
 
     def test_each_view_is_centered_on_its_subject(self):
-        front, left, _ = self.frame("left")
+        front, left, _, _ = self.frame("left")
         for view, width in ((front, 8), (left, 10)):
             columns = torch.nonzero(view[0].sum(dim=(0, 2)))[:, 0]
             self.assertEqual(int(columns.min()) + int(columns.max()) + 1, 18)
             self.assertEqual(int(columns.max() - columns.min()) + 1, width)
 
     def test_faint_smudges_are_left_out(self):
-        front, _, _ = self.frame("left", front=loaded_image(20, 20, 6, 2, 14, 18, faint_left=0))
+        front, _, _, _ = self.frame("left", front=loaded_image(20, 20, 6, 2, 14, 18, faint_left=0))
         self.assertEqual(tuple(front.shape), (1, 18, 18, 3))
         self.assertAlmostEqual(float(front[0, ..., 2].max()), 0.2, places=5)
+
+    def test_the_back_is_left_out_unless_connected(self):
+        self.assertIsNone(self.frame("left")[3])
+
+    def test_the_back_shares_the_square_and_is_centered(self):
+        back = loaded_image(20, 20, 9, 1, 15, 18)
+        front, _, _, framed_back = self.frame("left", back=back)
+        self.assertEqual(tuple(front.shape), (1, 19, 19, 3))
+        self.assertEqual(tuple(framed_back.shape), (1, 19, 19, 3))
+        columns = torch.nonzero(framed_back[0].sum(dim=(0, 2)))[:, 0]
+        self.assertLessEqual(abs(int(columns.min()) + int(columns.max()) + 1 - 19), 1)
+
+    def test_a_back_without_alpha_is_refused(self):
+        image, _ = loaded_image(20, 20, 9, 1, 15, 18)
+        with self.assertRaisesRegex(ValueError, "back picture has no transparency"):
+            self.frame("left", back=(image, None))
 
     def test_pictures_without_alpha_are_refused(self):
         image, _ = loaded_image(20, 20, 6, 2, 14, 18)
