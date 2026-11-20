@@ -9,6 +9,7 @@ The nodes appear under the `vexel` category:
 - **Save Voxels to Multi-Model .vox**: adds a model to a collection and rewrites the collection's multi-model file.
 - **Load Numbered Image**: one picture of an uploaded zip per run, in the order of their numbers.
 - **Load Numbered Views**: every view of one frame of an uploaded zip per run, framed for Pixal3D Multi-View Conditioning.
+- **Frame Front and Side Views**: a front and a side picture from two Load Image nodes, framed for Pixal3D Multi-View Conditioning.
 
 Both save nodes have a **Download** button that fetches their latest file to the machine running the browser.
 
@@ -50,6 +51,15 @@ Load Numbered Views frames the views the way Pixal3D's rig expects, 90 degrees a
 Sharing the framing across frames keeps their scale and position, which per-frame cropping would lose.
 Both save nodes use `placement: grid` for the same reason.
 
+
+
+## Front and side
+`example_workflows/pixal3d_front_side_to_vox.json` makes one model from a front and a side picture:
+1. Upload the front on **Front View** and the profile on **Side View**, both with the background in alpha and at the same pixel scale.
+2. Set **side_faces** to the way the subject faces in the side picture: `left` feeds Pixal3D's left view, `right` its right view.
+3. Set **maximum_size** on **Save Voxel Model** to the voxels along the longest axis, then **Run** and **Download**.
+
+maximum_size only scales down, so a model past TRELLIS's own resolution stays at that resolution; raise Trellis2UpsampleStage's resolution for more voxels.
 
 ## Inputs
 - `up_axis`: texture voxels and Pixal3D structures are `y`, TRELLIS.2 structures are `z`.

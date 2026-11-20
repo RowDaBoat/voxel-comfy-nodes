@@ -3,7 +3,7 @@ import os
 import folder_paths
 
 from .imageloading import archives_in, numbered_picture
-from .viewloading import VIEW_NAMES, numbered_views
+from .viewloading import VIEW_NAMES, framed_front_and_side, numbered_views
 from .naming import folder_inside, safe_name
 from .palettequantization import quantized, palette_of
 from .vox import write_vox, single_color_palette
@@ -268,3 +268,35 @@ class LoadNumberedViews:
         picture = {"index": index, "count": count, "whole_zip": whole_zip}
         images = tuple(views.get(view) for view in VIEW_NAMES)
         return {"ui": {"picture": [picture]}, "result": (*images, number, count)}
+
+
+class FrameFrontAndSideViews:
+    CATEGORY = "vexel"
+    RETURN_TYPES = ("IMAGE", "IMAGE", "IMAGE")
+    RETURN_NAMES = ("front", "left", "right")
+    OUTPUT_TOOLTIPS = (
+        "The front view on black, framed for Pixal3D Multi-View Conditioning.",
+        "The side view when the subject faces left in it, nothing otherwise.",
+        "The side view when the subject faces right in it, nothing otherwise.",
+    )
+    FUNCTION = "frame"
+
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "front": ("IMAGE", {"tooltip": "The subject facing the camera."}),
+                "front_mask": ("MASK", {"tooltip": "Load Image's mask of the front picture, from its alpha."}),
+                "side": ("IMAGE", {"tooltip": "The subject in profile, at the same pixel scale as the front."}),
+                "side_mask": ("MASK", {"tooltip": "Load Image's mask of the side picture, from its alpha."}),
+                "side_faces": (["left", "right"], {
+                    "tooltip": "Which way the subject faces in the side picture, choosing Pixal3D's left or right view."}),
+            }
+        }
+
+    def frame(self, front, front_mask, side, side_mask, side_faces):
+        framed_front, framed_side = framed_front_and_side(front, front_mask, side, side_mask)
+        print(f"[FrameFrontAndSideViews] {framed_front.shape[1]}px square, side facing {side_faces}")
+        if side_faces == "left":
+            return framed_front, framed_side, None
+        return framed_front, None, framed_side

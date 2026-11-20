@@ -86,14 +86,10 @@ def view_bounds_of(archive, frames, view):
     return union_of([bounds_of(premultiplied_picture(archive, frame[view])[1]) for frame in frames])
 
 
-def framing_of(archive, frames):
-    """One square per view, all of the same side, shared by every frame: each view centered
-    horizontally on where the subject goes in it over the whole animation, every view at the
-    same height, the widest extent filling 1/1.1 of the side, the rig Pixal3D expects."""
-    views = views_of({index: frame for index, frame in enumerate(frames)})
-    bounds = {view: view_bounds_of(archive, frames, view) for view in views}
-    if any(bound is None for bound in bounds.values()):
-        raise ValueError("a view is fully transparent in every frame")
+def square_framing(bounds):
+    """One square per view, all of the same side: each view centered horizontally on its
+    bounds, every view at the same height, the widest extent filling 1/1.1 of the side,
+    the rig Pixal3D expects."""
     top = min(bound[1] for bound in bounds.values())
     bottom = max(bound[3] for bound in bounds.values())
     widest = max(max(bound[2] - bound[0] for bound in bounds.values()), bottom - top)
@@ -101,6 +97,14 @@ def framing_of(archive, frames):
     middle = (top + bottom) / 2
     return {view: (round((bound[0] + bound[2]) / 2 - side / 2), round(middle - side / 2), side)
             for view, bound in bounds.items()}
+
+
+def framing_of(archive, frames):
+    views = views_of({index: frame for index, frame in enumerate(frames)})
+    bounds = {view: view_bounds_of(archive, frames, view) for view in views}
+    if any(bound is None for bound in bounds.values()):
+        raise ValueError("a view is fully transparent in every frame")
+    return square_framing(bounds)
 
 
 def cropped(pixels, left, top, side):
@@ -144,3 +148,23 @@ def numbered_views(archive_path, index):
         views = {view: framed_view(archive, entry, framing[view]) for view, entry in frame.items()}
         number = number_of(next(iter(frame.values())))
         return views, number, len(frames)
+
+
+def premultiplied_image(image, mask, name):
+    pixels = image[0, ..., :3].float().cpu().numpy()
+    if mask is None or tuple(mask.shape[-2:]) != tuple(pixels.shape[:2]):
+        raise ValueError(f"the {name} picture has no transparency, connect its mask and give it its background in alpha")
+    alpha = cleaned_alpha(1.0 - mask.reshape(-1, *pixels.shape[:2])[0].float().cpu()).numpy()
+    if alpha.min() == 1.0:
+        raise ValueError(f"the {name} picture has no transparency, it needs its background in alpha")
+    if alpha.max() == 0.0:
+        raise ValueError(f"the {name} picture is fully transparent")
+    return pixels * alpha[..., None], alpha
+
+
+def framed_front_and_side(front, front_mask, side, side_mask):
+    pictures = {"front": premultiplied_image(front, front_mask, "front"),
+                "side": premultiplied_image(side, side_mask, "side")}
+    framing = square_framing({name: bounds_of(alpha) for name, (_, alpha) in pictures.items()})
+    return tuple(torch.from_numpy(cropped(pictures[name][0], *framing[name])).unsqueeze(0)
+                 for name in ("front", "side"))
