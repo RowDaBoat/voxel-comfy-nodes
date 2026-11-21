@@ -55,9 +55,11 @@ Both save nodes use `placement: grid` for the same reason.
 
 ## Front, side and back
 `example_workflows/pixal3d_front_side_to_vox.json` makes one model from a front, a side and a back picture:
-1. Upload the front on **Front View**, the profile on **Side View** and the subject from behind on **Back View**, all with the background in alpha and at the same pixel scale. Without a back picture, bypass Back View with Ctrl+B.
+1. Upload the front on **Front View**, the profile on **Side View** and the subject from behind on **Back View**, all with the background in alpha and at the same pixel scale. Back View starts bypassed, since Pixal3D tends to mix a back picture's details with the front's; press Ctrl+B on it to try one.
 2. Set **side_faces** to the way the subject faces in the side picture: `left` feeds Pixal3D's left view, `right` its right view.
 3. Set **maximum_size** on **Save Voxel Model** to the voxels along the longest axis, then **Run** and **Download**.
+
+Every Run uses new seeds; set the KSamplers' control_after_generate to fixed to repeat one.
 
 maximum_size only scales down, so a model past TRELLIS's own resolution stays at that resolution; raise Trellis2UpsampleStage's resolution for more voxels.
 

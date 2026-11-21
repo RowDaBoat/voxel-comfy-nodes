@@ -56,7 +56,7 @@
       },
       "widgets_values": [
         56,
-        "fixed",
+        "randomize",
         12,
         7.5,
         "euler",
@@ -125,7 +125,7 @@
       },
       "widgets_values": [
         43,
-        "fixed",
+        "randomize",
         12,
         1,
         "euler",
@@ -239,7 +239,7 @@
       },
       "widgets_values": [
         42,
-        "fixed",
+        "randomize",
         20,
         7.5,
         "euler",
@@ -309,7 +309,7 @@
       },
       "widgets_values": [
         42,
-        "fixed",
+        "randomize",
         12,
         7.5,
         "euler",
@@ -1610,7 +1610,7 @@
       "outputs": [],
       "properties": {},
       "widgets_values": [
-        "## Front, side and back to .vox\n1. Upload the front picture on **Front View**, the profile on **Side View** and the subject from behind on **Back View**, all with the background in alpha and at the same pixel scale.\n2. Set **side_faces** on the framing node to the way the subject faces in the side picture.\n3. Set **maximum_size** on **Save Voxel Model**: the voxels along the model's longest axis.\n4. Press **Run**, then **Download** on Save Voxel Model.\n\nNo back picture? Select **Back View** and bypass it with Ctrl+B.\n\nThe model is cropped to its bounds and saved as `output/vox/front-side_#####_.vox`. maximum_size only scales down: past TRELLIS's own resolution the model stays at that resolution, raise Trellis2UpsampleStage's resolution for more voxels."
+        "## Front, side and back to .vox\n1. Upload the front picture on **Front View**, the profile on **Side View** and the subject from behind on **Back View**, all with the background in alpha and at the same pixel scale.\n2. Set **side_faces** on the framing node to the way the subject faces in the side picture.\n3. Set **maximum_size** on **Save Voxel Model**: the voxels along the model's longest axis.\n4. Press **Run**, then **Download** on Save Voxel Model.\n\n**Back View** starts bypassed: Pixal3D tends to mix a back picture's details with the front's, front and side alone come out cleaner. Select it and press Ctrl+B to try one anyway.\n\nEvery Run uses new seeds; set the KSamplers' control_after_generate to fixed to repeat one.\n\nThe model is cropped to its bounds and saved as `output/vox/front-side_#####_.vox`. maximum_size only scales down: past TRELLIS's own resolution the model stays at that resolution, raise Trellis2UpsampleStage's resolution for more voxels."
       ],
       "flags": {},
       "order": 0,
@@ -1630,7 +1630,7 @@
       ],
       "flags": {},
       "order": 0,
-      "mode": 0,
+      "mode": 4,
       "inputs": [],
       "outputs": [
         {
