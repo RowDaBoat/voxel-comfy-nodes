@@ -233,6 +233,97 @@ class FillInteriorTests(unittest.TestCase):
         self.assertEqual(len(voxels), 8 ** 3)
 
 
+RED, BLUE, GREEN, CYAN, MAGENTA, YELLOW = ((1.0, 0.0, 0.0), (0.0, 0.0, 1.0), (0.0, 1.0, 0.0), (0.0, 1.0, 1.0),
+                                           (1.0, 0.0, 1.0), (1.0, 1.0, 0.0))
+BOX_LOW, BOX_HIGH, GRID_SIDE = (4, 2, 6), (12, 18, 10), 24
+
+
+def hunyuan_box():
+    data = torch.zeros(1, GRID_SIDE, GRID_SIDE, GRID_SIDE)
+    for x in range(BOX_LOW[0], BOX_HIGH[0]):
+        for y in range(BOX_LOW[1], BOX_HIGH[1]):
+            for z in range(BOX_LOW[2], BOX_HIGH[2]):
+                data[0, z, y, GRID_SIDE - 1 - x] = 1.0
+    return FakeVoxel(data)
+
+
+def halves_picture(left_color, right_color):
+    image = torch.zeros(1, 40, 40, 3)
+    mask = torch.ones(1, 40, 40)
+    image[0, 5:35, 10:20] = torch.tensor(left_color)
+    image[0, 5:35, 20:30] = torch.tensor(right_color)
+    mask[0, 5:35, 10:30] = 0.0
+    return image, mask
+
+
+class PaintTests(unittest.TestCase):
+    def setUp(self):
+        sys.modules["folder_paths"] = fake_folder_paths(tempfile.mkdtemp())
+        self.nodes = importlib.import_module("comfyui_vox.nodes")
+
+    def paint(self, back=True):
+        front, front_mask = halves_picture(RED, BLUE)
+        side, side_mask = halves_picture(CYAN, MAGENTA)
+        back_image, back_mask = halves_picture(YELLOW, GREEN) if back else (None, None)
+        painted, = self.nodes.PaintVoxelsFromViews().paint(hunyuan_box(), 0.5, front, front_mask, side, side_mask,
+                                                          "left", back_image, back_mask)
+        return {tuple(cell): tuple(round(channel, 3) for channel in color)
+                for cell, color in zip(painted.data.tolist(), painted.voxel_colors.tolist())}
+
+    def test_only_the_surface_is_kept(self):
+        colors = self.paint()
+        self.assertNotIn((8, 10, 8), colors)
+        self.assertIn((8, 10, 9), colors)
+
+    def test_the_front_shows_the_subjects_left_on_the_right_of_the_picture(self):
+        colors = self.paint()
+        self.assertEqual(colors[(5, 10, 9)], RED)
+        self.assertEqual(colors[(10, 10, 9)], BLUE)
+
+    def test_the_side_picture_paints_both_sides_with_the_front_forward(self):
+        colors = self.paint()
+        self.assertEqual(colors[(11, 10, 8)], CYAN)
+        self.assertEqual(colors[(11, 10, 7)], MAGENTA)
+        self.assertEqual(colors[(4, 10, 8)], CYAN)
+        self.assertEqual(colors[(4, 10, 7)], MAGENTA)
+
+    def test_the_back_shows_the_subjects_left_on_the_left_of_the_picture(self):
+        colors = self.paint()
+        self.assertEqual(colors[(10, 10, 6)], YELLOW)
+        self.assertEqual(colors[(5, 10, 6)], GREEN)
+
+    def test_voxels_no_picture_sees_take_a_painted_color(self):
+        colors = self.paint()
+        painted = {RED, BLUE, CYAN, MAGENTA, YELLOW, GREEN}
+        self.assertIn(colors[(8, 17, 8)], painted)
+        self.assertIn(colors[(8, 2, 7)], painted)
+
+    def test_without_a_back_picture_the_back_takes_painted_colors(self):
+        colors = self.paint(back=False)
+        self.assertIn(colors[(8, 10, 6)], {RED, BLUE, CYAN, MAGENTA})
+
+    def test_painted_voxels_save_facing_the_front_of_magicavoxel(self):
+        directory = tempfile.mkdtemp()
+        sys.modules["folder_paths"] = fake_folder_paths(directory)
+        self.nodes.folder_paths = sys.modules["folder_paths"]
+        front, front_mask = halves_picture(RED, BLUE)
+        side, side_mask = halves_picture(CYAN, MAGENTA)
+        painted, = self.nodes.PaintVoxelsFromViews().paint(hunyuan_box(), 0.5, front, front_mask, side, side_mask, "left")
+        self.nodes.SaveVoxelsAsVox().save(painted, "test", "y", 64, 64, "#ff8000", 0.5, 0, "fit", False)
+        size, voxels, palette = read_vox(os.path.join(directory, "test_00001_.vox"))
+        self.assertEqual(size, (8, 4, 16))
+        colors = {voxel[:3]: palette[voxel[3] - 1][:3] for voxel in voxels}
+        self.assertEqual(colors[(1, 0, 8)], (255, 0, 0))
+        self.assertEqual(colors[(6, 0, 8)], (0, 0, 255))
+
+    def test_a_picture_without_alpha_is_refused(self):
+        front, _ = halves_picture(RED, BLUE)
+        side, side_mask = halves_picture(CYAN, MAGENTA)
+        with self.assertRaises(ValueError):
+            self.nodes.PaintVoxelsFromViews().paint(hunyuan_box(), 0.5, front, torch.zeros(1, 64, 64), side, side_mask,
+                                                    "left")
+
+
 def colored_line(length, color):
     coordinates = torch.tensor([[0, x, 0, 0] for x in range(length)])
     base_colors = torch.tensor([color] * length)

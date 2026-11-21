@@ -3,11 +3,12 @@ import os
 import folder_paths
 
 from .imageloading import archives_in, numbered_picture
-from .viewloading import VIEW_NAMES, framed_views, numbered_views
+from .viewloading import VIEW_NAMES, framed_views, numbered_views, premultiplied_image
 from .naming import folder_inside, safe_name
 from .palettequantization import quantized, palette_of
 from .vox import write_vox, single_color_palette
 from .voxcollection import write_collection
+from .voxelpainting import Picture, hunyuan_occupancy, painted_voxels, views_of
 from .voxelextraction import (voxel_points, rotated_to_z_up, rotated_to_z_up_in_grid, fitted, size_of,
                               grid_resolution_of, placed_in_grid, grid_size_of, with_filled_interior)
 
@@ -321,3 +322,40 @@ class FrameFrontAndSideViews:
         left = views["side"] if side_faces == "left" else None
         right = views["side"] if side_faces == "right" else None
         return views["front"], left, right, views.get("back")
+
+
+class PaintVoxelsFromViews:
+    CATEGORY = "vexel"
+    RETURN_TYPES = ("VOXEL",)
+    FUNCTION = "paint"
+
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "voxel": ("VOXEL", {"tooltip": "Hunyuan3D voxels, from VAEDecodeHunyuan3D."}),
+                "threshold": ("FLOAT", {"default": 0.6, "min": -1.0, "max": 1.0, "step": 0.01,
+                                        "tooltip": "Hunyuan3D cells above this value are solid."}),
+                "front": ("IMAGE",),
+                "front_mask": ("MASK",),
+                "side": ("IMAGE",),
+                "side_mask": ("MASK",),
+                "side_faces": (["left", "right"], {"tooltip": (
+                    "The way the subject faces in the side picture. It paints that side, and the other side "
+                    "takes it mirrored.")}),
+            },
+            "optional": {
+                "back": ("IMAGE",),
+                "back_mask": ("MASK",),
+            },
+        }
+
+    def paint(self, voxel, threshold, front, front_mask, side, side_mask, side_faces, back=None, back_mask=None):
+        def picture(image, mask, name):
+            return Picture(*premultiplied_image(image, mask, name))
+        back_picture = picture(back, back_mask, "back") if back is not None else None
+        pictures = views_of(picture(front, front_mask, "front"), picture(side, side_mask, "side"),
+                            side_faces, back_picture)
+        painted = painted_voxels(hunyuan_occupancy(voxel, threshold), pictures)
+        print(f"[PaintVoxelsFromViews] {painted.data.shape[0]} surface voxels painted from {', '.join(pictures)}")
+        return (painted,)
