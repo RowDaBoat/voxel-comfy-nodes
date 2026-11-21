@@ -63,6 +63,15 @@ Every Run uses new seeds; set the KSamplers' control_after_generate to fixed to 
 
 maximum_size only scales down, so a model past TRELLIS's own resolution stays at that resolution; raise Trellis2UpsampleStage's resolution for more voxels.
 
+## Hunyuan3D-2mv
+`example_workflows/hunyuan3d_mv_to_vox.json` makes the shape from the same front, side and back pictures with Hunyuan3D-2mv, which takes those views natively and keeps the back from mixing into the front:
+1. Upload the pictures as for the Pixal3D template and keep **side_faces** on `left`. Without a back picture, bypass **Back View** and **Encode Back** with Ctrl+B.
+2. Set **maximum_size** on **Save Voxel Model**, then **Run** and **Download**. **Preview Mesh** shows the shape.
+
+It needs `hunyuan3d-dit-v2-mv-turbo_fp16.safetensors` in `models/checkpoints`; the KSampler is set for it, 10 steps at cfg 1. The full `hunyuan3d-dit-v2-mv_fp16.safetensors` wants about 30 steps at cfg 5.
+
+Hunyuan3D-2mv makes the shape only: every voxel takes **fallback_color**, and the model comes out solid, standing, turned a quarter around its vertical axis.
+
 ## Inputs
 - `up_axis`: texture voxels and Pixal3D structures are `y`, TRELLIS.2 structures are `z`.
 - `maximum_size`: voxels along the longest axis, larger inputs are downsampled and their colors averaged, 256 at most.
