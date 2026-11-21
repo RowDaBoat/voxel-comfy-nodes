@@ -1,4 +1,4 @@
-from .nodes import FrameFrontAndSideViews, LoadNumberedImage, LoadNumberedViews, PaintVoxelsFromViews, SaveVoxelsAsVox, SaveVoxelsToVoxCollection
+from .nodes import FrameFrontAndSideViews, LoadNumberedImage, LoadNumberedViews, PaintVoxelsFromViews, SaveVoxelsAsVox, SaveVoxelsToVoxCollection, VoxelizeTexturedMesh
 
 
 NODE_CLASS_MAPPINGS = {
@@ -8,6 +8,7 @@ NODE_CLASS_MAPPINGS = {
     "LoadNumberedViews": LoadNumberedViews,
     "FrameFrontAndSideViews": FrameFrontAndSideViews,
     "PaintVoxelsFromViews": PaintVoxelsFromViews,
+    "VoxelizeTexturedMesh": VoxelizeTexturedMesh,
 }
 NODE_DISPLAY_NAME_MAPPINGS = {
     "SaveVoxelsAsVox": "Save Voxels as .vox",
@@ -16,5 +17,6 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "LoadNumberedViews": "Load Numbered Views",
     "FrameFrontAndSideViews": "Frame Front, Side and Back Views",
     "PaintVoxelsFromViews": "Paint Hunyuan3D Voxels from Views",
+    "VoxelizeTexturedMesh": "Voxelize Textured Hunyuan3D Mesh",
 }
 WEB_DIRECTORY = "./web"

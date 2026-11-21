@@ -9,6 +9,7 @@ from .palettequantization import quantized, palette_of
 from .vox import write_vox, single_color_palette
 from .voxcollection import write_collection
 from .voxelpainting import Picture, hunyuan_occupancy, painted_voxels, views_of
+from .meshvoxelization import textured_mesh_voxels
 from .voxelextraction import (voxel_points, rotated_to_z_up, rotated_to_z_up_in_grid, fitted, size_of,
                               grid_resolution_of, placed_in_grid, grid_size_of, with_filled_interior)
 
@@ -288,7 +289,7 @@ class FrameFrontAndSideViews:
     RETURN_TYPES = ("IMAGE", "IMAGE", "IMAGE", "IMAGE")
     RETURN_NAMES = ("front", "left", "right", "back")
     OUTPUT_TOOLTIPS = (
-        "The front view on black, framed for Pixal3D Multi-View Conditioning.",
+        "The front view on the background, framed for Pixal3D Multi-View Conditioning.",
         "The side view when the subject faces left in it, nothing otherwise.",
         "The side view when the subject faces right in it, nothing otherwise.",
         "The back view, nothing when no back picture is connected.",
@@ -309,14 +310,17 @@ class FrameFrontAndSideViews:
             "optional": {
                 "back": ("IMAGE", {"tooltip": "The subject from behind, at the same pixel scale as the front."}),
                 "back_mask": ("MASK", {"tooltip": "Load Image's mask of the back picture, from its alpha."}),
+                "background": ("FLOAT", {"default": 0.0, "min": 0.0, "max": 1.0, "step": 0.01, "tooltip": (
+                    "Gray level behind the subject: 0 is black, as Pixal3D and Hunyuan3D shapes want, "
+                    "Hunyuan3D's delight model wants about 0.8.")}),
             },
         }
 
-    def frame(self, front, front_mask, side, side_mask, side_faces, back=None, back_mask=None):
+    def frame(self, front, front_mask, side, side_mask, side_faces, back=None, back_mask=None, background=0.0):
         pictures = {"front": (front, front_mask), "side": (side, side_mask)}
         if back is not None:
             pictures["back"] = (back, back_mask)
-        views = framed_views(pictures)
+        views = framed_views(pictures, background)
         print(f"[FrameFrontAndSideViews] {views['front'].shape[1]}px square, {', '.join(views)}, "
               f"side facing {side_faces}")
         left = views["side"] if side_faces == "left" else None
@@ -359,3 +363,27 @@ class PaintVoxelsFromViews:
         painted = painted_voxels(hunyuan_occupancy(voxel, threshold), pictures)
         print(f"[PaintVoxelsFromViews] {painted.data.shape[0]} surface voxels painted from {', '.join(pictures)}")
         return (painted,)
+
+
+class VoxelizeTexturedMesh:
+    CATEGORY = "vexel"
+    RETURN_TYPES = ("VOXEL",)
+    FUNCTION = "voxelize"
+
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "trimesh": ("TRIMESH", {"tooltip": "The textured mesh from Hunyuan3DWrapper's Hy3DApplyTexture."}),
+                "resolution": ("INT", {"default": 256, "min": 16, "max": 1024, "tooltip": (
+                    "Voxels along the mesh's longest axis. Keep it above Save Voxel Model's maximum_size: "
+                    "saving averages these into the final voxels.")}),
+                "samples_per_voxel": ("INT", {"default": 8, "min": 1, "max": 64, "advanced": True, "tooltip": (
+                    "Texture samples taken per voxel of surface, averaged into its color.")}),
+            },
+        }
+
+    def voxelize(self, trimesh, resolution, samples_per_voxel):
+        voxels = textured_mesh_voxels(trimesh, resolution, samples_per_voxel)
+        print(f"[VoxelizeTexturedMesh] {voxels.data.shape[0]} surface voxels at resolution {resolution}")
+        return (voxels,)

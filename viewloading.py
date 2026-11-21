@@ -109,7 +109,7 @@ def framing_of(archive, frames):
 
 def cropped(pixels, left, top, side):
     """A `side` square of `pixels` from `(left, top)`, black where it reaches past them."""
-    square = numpy.zeros((side, side, 3), dtype=numpy.float32)
+    square = numpy.zeros((side, side) + pixels.shape[2:], dtype=numpy.float32)
     height, width = pixels.shape[:2]
     source_left, source_top = max(left, 0), max(top, 0)
     source_right, source_bottom = min(left + side, width), min(top + side, height)
@@ -162,8 +162,15 @@ def premultiplied_image(image, mask, name):
     return pixels * alpha[..., None], alpha
 
 
-def framed_views(pictures):
+def on_background(pixels, alpha, square, background):
+    framed = cropped(pixels, *square)
+    if background:
+        framed = framed + background * (1.0 - cropped(alpha, *square)[..., None])
+    return torch.from_numpy(framed).unsqueeze(0)
+
+
+def framed_views(pictures, background=0.0):
     premultiplied = {name: premultiplied_image(image, mask, name) for name, (image, mask) in pictures.items()}
     framing = square_framing({name: bounds_of(alpha) for name, (_, alpha) in premultiplied.items()})
-    return {name: torch.from_numpy(cropped(pixels, *framing[name])).unsqueeze(0)
-            for name, (pixels, _) in premultiplied.items()}
+    return {name: on_background(pixels, alpha, framing[name], background)
+            for name, (pixels, alpha) in premultiplied.items()}

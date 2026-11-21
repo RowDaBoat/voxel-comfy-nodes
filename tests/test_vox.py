@@ -324,6 +324,93 @@ class PaintTests(unittest.TestCase):
                                                     "left")
 
 
+CUBE_FACES = {
+    "front": [(1, -1, -1), (1, 1, -1), (1, 1, 1), (1, -1, 1)],
+    "back": [(-1, -1, -1), (-1, -1, 1), (-1, 1, 1), (-1, 1, -1)],
+    "up": [(-1, 1, -1), (-1, 1, 1), (1, 1, 1), (1, 1, -1)],
+    "down": [(-1, -1, -1), (1, -1, -1), (1, -1, 1), (-1, -1, 1)],
+    "right": [(-1, -1, 1), (1, -1, 1), (1, 1, 1), (-1, 1, 1)],
+    "left": [(-1, -1, -1), (-1, 1, -1), (1, 1, -1), (1, -1, -1)],
+}
+TEXTURE_U = {"front": 0.0, "right": 0.5}
+
+
+def textured_cube(with_texture=True):
+    from PIL import Image
+    vertices, faces, uv = [], [], []
+    for name, corners in CUBE_FACES.items():
+        start = len(vertices)
+        vertices.extend(corners)
+        uv.extend([(TEXTURE_U.get(name, 1.0), 0.5)] * 4)
+        faces.extend([(start, start + 1, start + 2), (start, start + 2, start + 3)])
+    texture = Image.new("RGB", (3, 1))
+    for column, color in enumerate(((255, 0, 0), (0, 255, 0), (0, 0, 255))):
+        texture.putpixel((column, 0), color)
+    material = types.SimpleNamespace(image=texture if with_texture else None)
+    visual = types.SimpleNamespace(uv=uv, material=material)
+    return types.SimpleNamespace(vertices=vertices, faces=faces, visual=visual)
+
+
+class VoxelizeTexturedMeshTests(unittest.TestCase):
+    def setUp(self):
+        self.directory = tempfile.mkdtemp()
+        sys.modules["folder_paths"] = fake_folder_paths(self.directory)
+        self.nodes = importlib.import_module("comfyui_vox.nodes")
+        self.nodes.folder_paths = sys.modules["folder_paths"]
+
+    def voxelize(self, mesh=None):
+        voxels, = self.nodes.VoxelizeTexturedMesh().voxelize(mesh or textured_cube(), 8, 8)
+        return voxels, {tuple(cell): tuple(round(channel, 3) for channel in color)
+                        for cell, color in zip(voxels.data.tolist(), voxels.voxel_colors.tolist())}
+
+    def test_every_surface_voxel_is_sampled(self):
+        voxels, colors = self.voxelize()
+        self.assertEqual(len(colors), 8 ** 3 - 6 ** 3)
+        self.assertEqual(voxels.resolution, 8)
+
+    def test_voxels_take_the_texture_of_the_faces_they_cover(self):
+        _, colors = self.voxelize()
+        self.assertEqual(colors[(4, 4, 7)], (1.0, 0.0, 0.0))
+        self.assertEqual(colors[(0, 4, 4)], (0.0, 1.0, 0.0))
+        self.assertEqual(colors[(7, 4, 4)], (0.0, 0.0, 1.0))
+        self.assertEqual(colors[(4, 7, 4)], (0.0, 0.0, 1.0))
+
+    def test_a_mesh_without_texture_is_refused(self):
+        with self.assertRaises(ValueError):
+            self.voxelize(textured_cube(with_texture=False))
+
+    def test_voxelized_meshes_save_facing_the_front_of_magicavoxel(self):
+        voxels, _ = self.voxelize()
+        self.nodes.SaveVoxelsAsVox().save(voxels, "test", "y", 64, 64, "#ff8000", 0.5, 0, "fit", True)
+        size, saved, palette = read_vox(os.path.join(self.directory, "test_00001_.vox"))
+        colors = {voxel[:3]: palette[voxel[3] - 1][:3] for voxel in saved}
+        self.assertEqual(size, (8, 8, 8))
+        self.assertEqual(len(saved), 8 ** 3)
+        self.assertEqual(colors[(4, 0, 4)], (255, 0, 0))
+        self.assertEqual(colors[(0, 4, 4)], (0, 255, 0))
+
+
+class FramingBackgroundTests(unittest.TestCase):
+    def setUp(self):
+        sys.modules["folder_paths"] = fake_folder_paths(tempfile.mkdtemp())
+        self.nodes = importlib.import_module("comfyui_vox.nodes")
+
+    def test_the_background_fills_around_the_subject(self):
+        front, front_mask = halves_picture(RED, BLUE)
+        side, side_mask = halves_picture(CYAN, MAGENTA)
+        framed, _, _, _ = self.nodes.FrameFrontAndSideViews().frame(front, front_mask, side, side_mask, "left",
+                                                                    background=0.8)
+        self.assertAlmostEqual(framed[0, 0, 0, 0].item(), 0.8, places=5)
+        middle = framed.shape[1] // 2
+        self.assertEqual(framed[0, middle, middle // 2].tolist(), [1.0, 0.0, 0.0])
+
+    def test_the_background_is_black_by_default(self):
+        front, front_mask = halves_picture(RED, BLUE)
+        side, side_mask = halves_picture(CYAN, MAGENTA)
+        framed, _, _, _ = self.nodes.FrameFrontAndSideViews().frame(front, front_mask, side, side_mask, "left")
+        self.assertEqual(framed[0, 0, 0].tolist(), [0.0, 0.0, 0.0])
+
+
 def colored_line(length, color):
     coordinates = torch.tensor([[0, x, 0, 0] for x in range(length)])
     base_colors = torch.tensor([color] * length)

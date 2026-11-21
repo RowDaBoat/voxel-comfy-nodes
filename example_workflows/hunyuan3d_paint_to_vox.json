@@ -1,0 +1,1688 @@
+{
+  "id": "3c9d6f1a-8b2e-4f70-a5d4-2e7b9c1f0a63",
+  "revision": 0,
+  "last_node_id": 40,
+  "last_link_id": 42,
+  "nodes": [
+    {
+      "id": 1,
+      "type": "LoadImage",
+      "pos": [
+        0,
+        0
+      ],
+      "size": [
+        320,
+        330
+      ],
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            1,
+            7
+          ]
+        },
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": [
+            2,
+            8
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "LoadImage",
+        "cnr_id": "comfy-core"
+      },
+      "flags": {},
+      "order": 0,
+      "mode": 0,
+      "title": "Front View",
+      "widgets_values": [
+        "front.png",
+        "image"
+      ]
+    },
+    {
+      "id": 2,
+      "type": "LoadImage",
+      "pos": [
+        0,
+        370
+      ],
+      "size": [
+        320,
+        330
+      ],
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            3,
+            9
+          ]
+        },
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": [
+            4,
+            10
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "LoadImage",
+        "cnr_id": "comfy-core"
+      },
+      "flags": {},
+      "order": 0,
+      "mode": 0,
+      "title": "Side View",
+      "widgets_values": [
+        "side.png",
+        "image"
+      ]
+    },
+    {
+      "id": 3,
+      "type": "LoadImage",
+      "pos": [
+        0,
+        740
+      ],
+      "size": [
+        320,
+        330
+      ],
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            5
+          ]
+        },
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": [
+            6
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "LoadImage",
+        "cnr_id": "comfy-core"
+      },
+      "flags": {},
+      "order": 0,
+      "mode": 0,
+      "title": "Back View",
+      "widgets_values": [
+        "back.png",
+        "image"
+      ]
+    },
+    {
+      "id": 4,
+      "type": "FrameFrontAndSideViews",
+      "pos": [
+        380,
+        120
+      ],
+      "size": [
+        340,
+        240
+      ],
+      "inputs": [
+        {
+          "name": "front",
+          "type": "IMAGE",
+          "link": 1
+        },
+        {
+          "name": "front_mask",
+          "type": "MASK",
+          "link": 2
+        },
+        {
+          "name": "side",
+          "type": "IMAGE",
+          "link": 3
+        },
+        {
+          "name": "side_mask",
+          "type": "MASK",
+          "link": 4
+        },
+        {
+          "name": "back",
+          "type": "IMAGE",
+          "link": 5,
+          "shape": 7
+        },
+        {
+          "name": "back_mask",
+          "type": "MASK",
+          "link": 6,
+          "shape": 7
+        }
+      ],
+      "outputs": [
+        {
+          "name": "front",
+          "type": "IMAGE",
+          "links": [
+            12
+          ]
+        },
+        {
+          "name": "left",
+          "type": "IMAGE",
+          "links": [
+            13
+          ]
+        },
+        {
+          "name": "right",
+          "type": "IMAGE",
+          "links": []
+        },
+        {
+          "name": "back",
+          "type": "IMAGE",
+          "links": [
+            14
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "FrameFrontAndSideViews",
+        "cnr_id": "comfyui_vox"
+      },
+      "flags": {},
+      "order": 0,
+      "mode": 0,
+      "title": "Frame Views for the Shape",
+      "widgets_values": [
+        "left",
+        0.0
+      ]
+    },
+    {
+      "id": 5,
+      "type": "FrameFrontAndSideViews",
+      "pos": [
+        380,
+        640
+      ],
+      "size": [
+        340,
+        240
+      ],
+      "inputs": [
+        {
+          "name": "front",
+          "type": "IMAGE",
+          "link": 7
+        },
+        {
+          "name": "front_mask",
+          "type": "MASK",
+          "link": 8
+        },
+        {
+          "name": "side",
+          "type": "IMAGE",
+          "link": 9
+        },
+        {
+          "name": "side_mask",
+          "type": "MASK",
+          "link": 10
+        },
+        {
+          "name": "back",
+          "type": "IMAGE",
+          "link": null,
+          "shape": 7
+        },
+        {
+          "name": "back_mask",
+          "type": "MASK",
+          "link": null,
+          "shape": 7
+        }
+      ],
+      "outputs": [
+        {
+          "name": "front",
+          "type": "IMAGE",
+          "links": [
+            22
+          ]
+        },
+        {
+          "name": "left",
+          "type": "IMAGE",
+          "links": []
+        },
+        {
+          "name": "right",
+          "type": "IMAGE",
+          "links": []
+        },
+        {
+          "name": "back",
+          "type": "IMAGE",
+          "links": []
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "FrameFrontAndSideViews",
+        "cnr_id": "comfyui_vox"
+      },
+      "flags": {},
+      "order": 0,
+      "mode": 0,
+      "title": "Frame Front for Delight",
+      "widgets_values": [
+        "left",
+        0.8
+      ]
+    },
+    {
+      "id": 10,
+      "type": "Hy3DModelLoader",
+      "pos": [
+        800,
+        -200
+      ],
+      "size": [
+        340,
+        130
+      ],
+      "inputs": [
+        {
+          "name": "compile_args",
+          "type": "HY3DCOMPILEARGS",
+          "link": null,
+          "shape": 7
+        }
+      ],
+      "outputs": [
+        {
+          "name": "pipeline",
+          "type": "HY3DMODEL",
+          "links": [
+            11
+          ]
+        },
+        {
+          "name": "vae",
+          "type": "HY3DVAE",
+          "links": [
+            15
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "Hy3DModelLoader",
+        "cnr_id": "comfyui-hunyuan3dwrapper"
+      },
+      "flags": {},
+      "order": 0,
+      "mode": 0,
+      "widgets_values": [
+        "hunyuan3d-dit-v2-mv_fp16.safetensors",
+        "sdpa",
+        false
+      ]
+    },
+    {
+      "id": 11,
+      "type": "Hy3DGenerateMeshMultiView",
+      "pos": [
+        800,
+        0
+      ],
+      "size": [
+        340,
+        250
+      ],
+      "inputs": [
+        {
+          "name": "pipeline",
+          "type": "HY3DMODEL",
+          "link": 11
+        },
+        {
+          "name": "front",
+          "type": "IMAGE",
+          "link": 12,
+          "shape": 7
+        },
+        {
+          "name": "left",
+          "type": "IMAGE",
+          "link": 13,
+          "shape": 7
+        },
+        {
+          "name": "right",
+          "type": "IMAGE",
+          "link": null,
+          "shape": 7
+        },
+        {
+          "name": "back",
+          "type": "IMAGE",
+          "link": 14,
+          "shape": 7
+        }
+      ],
+      "outputs": [
+        {
+          "name": "latents",
+          "type": "HY3DLATENT",
+          "links": [
+            16
+          ]
+        },
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "links": []
+        },
+        {
+          "name": "mask",
+          "type": "MASK",
+          "links": []
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "Hy3DGenerateMeshMultiView",
+        "cnr_id": "comfyui-hunyuan3dwrapper"
+      },
+      "flags": {},
+      "order": 0,
+      "mode": 0,
+      "widgets_values": [
+        5.5,
+        30,
+        0,
+        "randomize",
+        "FlowMatchEulerDiscreteScheduler"
+      ]
+    },
+    {
+      "id": 12,
+      "type": "Hy3DVAEDecode",
+      "pos": [
+        1200,
+        0
+      ],
+      "size": [
+        320,
+        250
+      ],
+      "inputs": [
+        {
+          "name": "vae",
+          "type": "HY3DVAE",
+          "link": 15
+        },
+        {
+          "name": "latents",
+          "type": "HY3DLATENT",
+          "link": 16
+        }
+      ],
+      "outputs": [
+        {
+          "name": "trimesh",
+          "type": "TRIMESH",
+          "links": [
+            17
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "Hy3DVAEDecode",
+        "cnr_id": "comfyui-hunyuan3dwrapper"
+      },
+      "flags": {},
+      "order": 0,
+      "mode": 0,
+      "widgets_values": [
+        1.01,
+        256,
+        32000,
+        0,
+        "mc",
+        true,
+        true
+      ]
+    },
+    {
+      "id": 13,
+      "type": "Hy3DPostprocessMesh",
+      "pos": [
+        1200,
+        300
+      ],
+      "size": [
+        320,
+        200
+      ],
+      "inputs": [
+        {
+          "name": "trimesh",
+          "type": "TRIMESH",
+          "link": 17
+        }
+      ],
+      "outputs": [
+        {
+          "name": "trimesh",
+          "type": "TRIMESH",
+          "links": [
+            18
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "Hy3DPostprocessMesh",
+        "cnr_id": "comfyui-hunyuan3dwrapper"
+      },
+      "flags": {},
+      "order": 0,
+      "mode": 0,
+      "widgets_values": [
+        true,
+        true,
+        true,
+        50000,
+        false
+      ]
+    },
+    {
+      "id": 14,
+      "type": "Hy3DMeshUVWrap",
+      "pos": [
+        1200,
+        550
+      ],
+      "size": [
+        320,
+        60
+      ],
+      "inputs": [
+        {
+          "name": "trimesh",
+          "type": "TRIMESH",
+          "link": 18
+        }
+      ],
+      "outputs": [
+        {
+          "name": "trimesh",
+          "type": "TRIMESH",
+          "links": [
+            19
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "Hy3DMeshUVWrap",
+        "cnr_id": "comfyui-hunyuan3dwrapper"
+      },
+      "flags": {},
+      "order": 0,
+      "mode": 0
+    },
+    {
+      "id": 20,
+      "type": "Hy3DCameraConfig",
+      "pos": [
+        1580,
+        -200
+      ],
+      "size": [
+        340,
+        180
+      ],
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "camera_config",
+          "type": "HY3DCAMERA",
+          "links": [
+            20,
+            28,
+            32
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "Hy3DCameraConfig",
+        "cnr_id": "comfyui-hunyuan3dwrapper"
+      },
+      "flags": {},
+      "order": 0,
+      "mode": 0,
+      "widgets_values": [
+        "0, 90, 180, 270, 0, 180",
+        "0, 0, 0, 0, 90, -90",
+        "1, 0.1, 0.5, 0.1, 0.05, 0.05",
+        1.45,
+        1.2
+      ]
+    },
+    {
+      "id": 21,
+      "type": "Hy3DRenderMultiView",
+      "pos": [
+        1580,
+        40
+      ],
+      "size": [
+        340,
+        160
+      ],
+      "inputs": [
+        {
+          "name": "trimesh",
+          "type": "TRIMESH",
+          "link": 19
+        },
+        {
+          "name": "camera_config",
+          "type": "HY3DCAMERA",
+          "link": 20,
+          "shape": 7
+        }
+      ],
+      "outputs": [
+        {
+          "name": "normal_maps",
+          "type": "IMAGE",
+          "links": [
+            26
+          ]
+        },
+        {
+          "name": "position_maps",
+          "type": "IMAGE",
+          "links": [
+            27
+          ]
+        },
+        {
+          "name": "renderer",
+          "type": "MESHRENDER",
+          "links": [
+            31
+          ]
+        },
+        {
+          "name": "masks",
+          "type": "MASK",
+          "links": []
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "Hy3DRenderMultiView",
+        "cnr_id": "comfyui-hunyuan3dwrapper"
+      },
+      "flags": {},
+      "order": 0,
+      "mode": 0,
+      "widgets_values": [
+        1024,
+        1024,
+        "world"
+      ]
+    },
+    {
+      "id": 22,
+      "type": "DownloadAndLoadHy3DDelightModel",
+      "pos": [
+        800,
+        640
+      ],
+      "size": [
+        340,
+        80
+      ],
+      "inputs": [
+        {
+          "name": "compile_args",
+          "type": "HY3DCOMPILEARGS",
+          "link": null,
+          "shape": 7
+        }
+      ],
+      "outputs": [
+        {
+          "name": "delight_pipe",
+          "type": "HY3DDIFFUSERSPIPE",
+          "links": [
+            21
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "DownloadAndLoadHy3DDelightModel",
+        "cnr_id": "comfyui-hunyuan3dwrapper"
+      },
+      "flags": {},
+      "order": 0,
+      "mode": 0,
+      "widgets_values": [
+        "hunyuan3d-delight-v2-0"
+      ]
+    },
+    {
+      "id": 23,
+      "type": "Hy3DDelightImage",
+      "pos": [
+        1200,
+        680
+      ],
+      "size": [
+        320,
+        230
+      ],
+      "inputs": [
+        {
+          "name": "delight_pipe",
+          "type": "HY3DDIFFUSERSPIPE",
+          "link": 21
+        },
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "link": 22
+        },
+        {
+          "name": "scheduler",
+          "type": "NOISESCHEDULER",
+          "link": null,
+          "shape": 7
+        }
+      ],
+      "outputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "links": [
+            23,
+            25
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "Hy3DDelightImage",
+        "cnr_id": "comfyui-hunyuan3dwrapper"
+      },
+      "flags": {},
+      "order": 0,
+      "mode": 0,
+      "widgets_values": [
+        50,
+        512,
+        512,
+        1.0,
+        0,
+        "fixed"
+      ]
+    },
+    {
+      "id": 24,
+      "type": "DownloadAndLoadHy3DPaintModel",
+      "pos": [
+        1580,
+        260
+      ],
+      "size": [
+        340,
+        80
+      ],
+      "inputs": [
+        {
+          "name": "compile_args",
+          "type": "HY3DCOMPILEARGS",
+          "link": null,
+          "shape": 7
+        }
+      ],
+      "outputs": [
+        {
+          "name": "multiview_pipe",
+          "type": "HY3DDIFFUSERSPIPE",
+          "links": [
+            24
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "DownloadAndLoadHy3DPaintModel",
+        "cnr_id": "comfyui-hunyuan3dwrapper"
+      },
+      "flags": {},
+      "order": 0,
+      "mode": 0,
+      "widgets_values": [
+        "hunyuan3d-paint-v2-0"
+      ]
+    },
+    {
+      "id": 25,
+      "type": "Hy3DSampleMultiView",
+      "pos": [
+        1980,
+        40
+      ],
+      "size": [
+        340,
+        270
+      ],
+      "inputs": [
+        {
+          "name": "pipeline",
+          "type": "HY3DDIFFUSERSPIPE",
+          "link": 24
+        },
+        {
+          "name": "ref_image",
+          "type": "IMAGE",
+          "link": 25
+        },
+        {
+          "name": "normal_maps",
+          "type": "IMAGE",
+          "link": 26
+        },
+        {
+          "name": "position_maps",
+          "type": "IMAGE",
+          "link": 27
+        },
+        {
+          "name": "camera_config",
+          "type": "HY3DCAMERA",
+          "link": 28,
+          "shape": 7
+        },
+        {
+          "name": "scheduler",
+          "type": "NOISESCHEDULER",
+          "link": null,
+          "shape": 7
+        },
+        {
+          "name": "samples",
+          "type": "LATENT",
+          "link": null,
+          "shape": 7
+        }
+      ],
+      "outputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "links": [
+            29,
+            30
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "Hy3DSampleMultiView",
+        "cnr_id": "comfyui-hunyuan3dwrapper"
+      },
+      "flags": {},
+      "order": 0,
+      "mode": 0,
+      "widgets_values": [
+        512,
+        25,
+        0,
+        "randomize",
+        1.0
+      ]
+    },
+    {
+      "id": 26,
+      "type": "PreviewImage",
+      "pos": [
+        1980,
+        360
+      ],
+      "size": [
+        340,
+        300
+      ],
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 29
+        }
+      ],
+      "outputs": [],
+      "properties": {
+        "Node name for S&R": "PreviewImage",
+        "cnr_id": "comfy-core"
+      },
+      "flags": {},
+      "order": 0,
+      "mode": 0,
+      "title": "Painted Views"
+    },
+    {
+      "id": 27,
+      "type": "PreviewImage",
+      "pos": [
+        1580,
+        680
+      ],
+      "size": [
+        300,
+        300
+      ],
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 23
+        }
+      ],
+      "outputs": [],
+      "properties": {
+        "Node name for S&R": "PreviewImage",
+        "cnr_id": "comfy-core"
+      },
+      "flags": {},
+      "order": 0,
+      "mode": 0,
+      "title": "Delit Front"
+    },
+    {
+      "id": 30,
+      "type": "Hy3DBakeFromMultiview",
+      "pos": [
+        2380,
+        40
+      ],
+      "size": [
+        300,
+        100
+      ],
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 30
+        },
+        {
+          "name": "renderer",
+          "type": "MESHRENDER",
+          "link": 31
+        },
+        {
+          "name": "camera_config",
+          "type": "HY3DCAMERA",
+          "link": 32,
+          "shape": 7
+        }
+      ],
+      "outputs": [
+        {
+          "name": "texture",
+          "type": "IMAGE",
+          "links": [
+            33
+          ]
+        },
+        {
+          "name": "mask",
+          "type": "MASK",
+          "links": [
+            34
+          ]
+        },
+        {
+          "name": "renderer",
+          "type": "MESHRENDER",
+          "links": [
+            35
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "Hy3DBakeFromMultiview",
+        "cnr_id": "comfyui-hunyuan3dwrapper"
+      },
+      "flags": {},
+      "order": 0,
+      "mode": 0
+    },
+    {
+      "id": 31,
+      "type": "Hy3DMeshVerticeInpaintTexture",
+      "pos": [
+        2380,
+        190
+      ],
+      "size": [
+        300,
+        100
+      ],
+      "inputs": [
+        {
+          "name": "texture",
+          "type": "IMAGE",
+          "link": 33
+        },
+        {
+          "name": "mask",
+          "type": "MASK",
+          "link": 34
+        },
+        {
+          "name": "renderer",
+          "type": "MESHRENDER",
+          "link": 35
+        }
+      ],
+      "outputs": [
+        {
+          "name": "texture",
+          "type": "IMAGE",
+          "links": [
+            36
+          ]
+        },
+        {
+          "name": "mask",
+          "type": "MASK",
+          "links": [
+            37
+          ]
+        },
+        {
+          "name": "renderer",
+          "type": "MESHRENDER",
+          "links": [
+            39
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "Hy3DMeshVerticeInpaintTexture",
+        "cnr_id": "comfyui-hunyuan3dwrapper"
+      },
+      "flags": {},
+      "order": 0,
+      "mode": 0
+    },
+    {
+      "id": 32,
+      "type": "CV2InpaintTexture",
+      "pos": [
+        2380,
+        340
+      ],
+      "size": [
+        300,
+        110
+      ],
+      "inputs": [
+        {
+          "name": "texture",
+          "type": "IMAGE",
+          "link": 36
+        },
+        {
+          "name": "mask",
+          "type": "MASK",
+          "link": 37
+        }
+      ],
+      "outputs": [
+        {
+          "name": "texture",
+          "type": "IMAGE",
+          "links": [
+            38
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "CV2InpaintTexture",
+        "cnr_id": "comfyui-hunyuan3dwrapper"
+      },
+      "flags": {},
+      "order": 0,
+      "mode": 0,
+      "widgets_values": [
+        3,
+        "ns"
+      ]
+    },
+    {
+      "id": 33,
+      "type": "Hy3DApplyTexture",
+      "pos": [
+        2380,
+        500
+      ],
+      "size": [
+        300,
+        80
+      ],
+      "inputs": [
+        {
+          "name": "texture",
+          "type": "IMAGE",
+          "link": 38
+        },
+        {
+          "name": "renderer",
+          "type": "MESHRENDER",
+          "link": 39
+        }
+      ],
+      "outputs": [
+        {
+          "name": "trimesh",
+          "type": "TRIMESH",
+          "links": [
+            40,
+            41
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "Hy3DApplyTexture",
+        "cnr_id": "comfyui-hunyuan3dwrapper"
+      },
+      "flags": {},
+      "order": 0,
+      "mode": 0
+    },
+    {
+      "id": 34,
+      "type": "Hy3DExportMesh",
+      "pos": [
+        2740,
+        500
+      ],
+      "size": [
+        320,
+        130
+      ],
+      "inputs": [
+        {
+          "name": "trimesh",
+          "type": "TRIMESH",
+          "link": 40
+        }
+      ],
+      "outputs": [
+        {
+          "name": "glb_path",
+          "type": "STRING",
+          "links": []
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "Hy3DExportMesh",
+        "cnr_id": "comfyui-hunyuan3dwrapper"
+      },
+      "flags": {},
+      "order": 0,
+      "mode": 0,
+      "title": "Save Textured Mesh",
+      "widgets_values": [
+        "3D/hunyuan-paint",
+        "glb",
+        true
+      ]
+    },
+    {
+      "id": 35,
+      "type": "VoxelizeTexturedMesh",
+      "pos": [
+        2740,
+        40
+      ],
+      "size": [
+        340,
+        130
+      ],
+      "inputs": [
+        {
+          "name": "trimesh",
+          "type": "TRIMESH",
+          "link": 41
+        }
+      ],
+      "outputs": [
+        {
+          "name": "VOXEL",
+          "type": "VOXEL",
+          "links": [
+            42
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "VoxelizeTexturedMesh",
+        "cnr_id": "comfyui_vox"
+      },
+      "flags": {},
+      "order": 0,
+      "mode": 0,
+      "title": "Voxelize Textured Hunyuan3D Mesh",
+      "widgets_values": [
+        256,
+        8
+      ]
+    },
+    {
+      "id": 36,
+      "type": "SaveVoxelsAsVox",
+      "pos": [
+        3120,
+        40
+      ],
+      "size": [
+        340,
+        300
+      ],
+      "inputs": [
+        {
+          "name": "voxel",
+          "type": "VOXEL",
+          "link": 42
+        }
+      ],
+      "outputs": [],
+      "properties": {
+        "Node name for S&R": "SaveVoxelsAsVox",
+        "cnr_id": "comfyui_vox"
+      },
+      "flags": {},
+      "order": 0,
+      "mode": 0,
+      "title": "Save Voxel Model",
+      "widgets_values": [
+        "vox/hunyuan-paint",
+        "y",
+        64,
+        64,
+        "#b4b4b4",
+        0.5,
+        0,
+        "fit",
+        true
+      ]
+    },
+    {
+      "id": 40,
+      "type": "MarkdownNote",
+      "pos": [
+        0,
+        -620
+      ],
+      "size": [
+        760,
+        580
+      ],
+      "inputs": [],
+      "outputs": [],
+      "properties": {},
+      "flags": {},
+      "order": 0,
+      "mode": 0,
+      "title": "Front, side and back to painted .vox with Hunyuan3D",
+      "widgets_values": [
+        "## Front, side and back to painted .vox with Hunyuan3D\nNeeds [ComfyUI-Hunyuan3DWrapper](https://github.com/kijai/ComfyUI-Hunyuan3DWrapper) and `hunyuan3d-dit-v2-mv_fp16.safetensors` in `models/diffusion_models`. The first run downloads the delight and paint models into `models/diffusers`.\n\n1. Upload the front picture on **Front View**, the profile on **Side View** and the subject from behind on **Back View**, all with the background in alpha and at the same pixel scale. Keep **side_faces** on `left` on both framing nodes.\n2. Set **maximum_size** on **Save Voxel Model**: the voxels along the model's longest axis.\n3. Press **Run**, then **Download** on Save Voxel Model. **Save Textured Mesh** keeps the painted mesh in `output/3D`.\n\nHunyuan3D-2mv makes the shape from all three pictures. The painter takes the front only: it is delit on gray, painted into six views of the shape (**Painted Views**), baked into the mesh's texture, and the voxelizer averages **samples_per_voxel** texture samples into each voxel.\n\nWithout a back picture, select **Back View** and press Ctrl+B.\n\nEvery Run uses new shape and paint seeds; set control_after_generate to fixed to repeat one."
+      ]
+    }
+  ],
+  "links": [
+    [
+      1,
+      1,
+      0,
+      4,
+      0,
+      "IMAGE"
+    ],
+    [
+      2,
+      1,
+      1,
+      4,
+      1,
+      "MASK"
+    ],
+    [
+      3,
+      2,
+      0,
+      4,
+      2,
+      "IMAGE"
+    ],
+    [
+      4,
+      2,
+      1,
+      4,
+      3,
+      "MASK"
+    ],
+    [
+      5,
+      3,
+      0,
+      4,
+      4,
+      "IMAGE"
+    ],
+    [
+      6,
+      3,
+      1,
+      4,
+      5,
+      "MASK"
+    ],
+    [
+      7,
+      1,
+      0,
+      5,
+      0,
+      "IMAGE"
+    ],
+    [
+      8,
+      1,
+      1,
+      5,
+      1,
+      "MASK"
+    ],
+    [
+      9,
+      2,
+      0,
+      5,
+      2,
+      "IMAGE"
+    ],
+    [
+      10,
+      2,
+      1,
+      5,
+      3,
+      "MASK"
+    ],
+    [
+      11,
+      10,
+      0,
+      11,
+      0,
+      "HY3DMODEL"
+    ],
+    [
+      12,
+      4,
+      0,
+      11,
+      1,
+      "IMAGE"
+    ],
+    [
+      13,
+      4,
+      1,
+      11,
+      2,
+      "IMAGE"
+    ],
+    [
+      14,
+      4,
+      3,
+      11,
+      4,
+      "IMAGE"
+    ],
+    [
+      15,
+      10,
+      1,
+      12,
+      0,
+      "HY3DVAE"
+    ],
+    [
+      16,
+      11,
+      0,
+      12,
+      1,
+      "HY3DLATENT"
+    ],
+    [
+      17,
+      12,
+      0,
+      13,
+      0,
+      "TRIMESH"
+    ],
+    [
+      18,
+      13,
+      0,
+      14,
+      0,
+      "TRIMESH"
+    ],
+    [
+      19,
+      14,
+      0,
+      21,
+      0,
+      "TRIMESH"
+    ],
+    [
+      20,
+      20,
+      0,
+      21,
+      1,
+      "HY3DCAMERA"
+    ],
+    [
+      21,
+      22,
+      0,
+      23,
+      0,
+      "HY3DDIFFUSERSPIPE"
+    ],
+    [
+      22,
+      5,
+      0,
+      23,
+      1,
+      "IMAGE"
+    ],
+    [
+      23,
+      23,
+      0,
+      27,
+      0,
+      "IMAGE"
+    ],
+    [
+      24,
+      24,
+      0,
+      25,
+      0,
+      "HY3DDIFFUSERSPIPE"
+    ],
+    [
+      25,
+      23,
+      0,
+      25,
+      1,
+      "IMAGE"
+    ],
+    [
+      26,
+      21,
+      0,
+      25,
+      2,
+      "IMAGE"
+    ],
+    [
+      27,
+      21,
+      1,
+      25,
+      3,
+      "IMAGE"
+    ],
+    [
+      28,
+      20,
+      0,
+      25,
+      4,
+      "HY3DCAMERA"
+    ],
+    [
+      29,
+      25,
+      0,
+      26,
+      0,
+      "IMAGE"
+    ],
+    [
+      30,
+      25,
+      0,
+      30,
+      0,
+      "IMAGE"
+    ],
+    [
+      31,
+      21,
+      2,
+      30,
+      1,
+      "MESHRENDER"
+    ],
+    [
+      32,
+      20,
+      0,
+      30,
+      2,
+      "HY3DCAMERA"
+    ],
+    [
+      33,
+      30,
+      0,
+      31,
+      0,
+      "IMAGE"
+    ],
+    [
+      34,
+      30,
+      1,
+      31,
+      1,
+      "MASK"
+    ],
+    [
+      35,
+      30,
+      2,
+      31,
+      2,
+      "MESHRENDER"
+    ],
+    [
+      36,
+      31,
+      0,
+      32,
+      0,
+      "IMAGE"
+    ],
+    [
+      37,
+      31,
+      1,
+      32,
+      1,
+      "MASK"
+    ],
+    [
+      38,
+      32,
+      0,
+      33,
+      0,
+      "IMAGE"
+    ],
+    [
+      39,
+      31,
+      2,
+      33,
+      1,
+      "MESHRENDER"
+    ],
+    [
+      40,
+      33,
+      0,
+      34,
+      0,
+      "TRIMESH"
+    ],
+    [
+      41,
+      33,
+      0,
+      35,
+      0,
+      "TRIMESH"
+    ],
+    [
+      42,
+      35,
+      0,
+      36,
+      0,
+      "VOXEL"
+    ]
+  ],
+  "groups": [
+    {
+      "id": 1,
+      "title": "Front, Side and Back",
+      "bounding": [
+        -20,
+        -80,
+        760,
+        1170
+      ],
+      "color": "#3f789e",
+      "flags": {}
+    },
+    {
+      "id": 2,
+      "title": "Hunyuan3D-2mv Shape",
+      "bounding": [
+        780,
+        -280,
+        760,
+        920
+      ],
+      "color": "#A88",
+      "flags": {}
+    },
+    {
+      "id": 3,
+      "title": "Hunyuan3D-Paint",
+      "bounding": [
+        780,
+        600,
+        1960,
+        420
+      ],
+      "color": "#a1309b",
+      "flags": {}
+    },
+    {
+      "id": 4,
+      "title": "Paint Views",
+      "bounding": [
+        1560,
+        -280,
+        780,
+        960
+      ],
+      "color": "#a1309b",
+      "flags": {}
+    },
+    {
+      "id": 5,
+      "title": "Bake Texture",
+      "bounding": [
+        2360,
+        -40,
+        360,
+        640
+      ],
+      "color": "#b06634",
+      "flags": {}
+    },
+    {
+      "id": 6,
+      "title": "Voxelize and Save",
+      "bounding": [
+        2720,
+        -40,
+        760,
+        700
+      ],
+      "color": "#8A8",
+      "flags": {}
+    }
+  ],
+  "config": {},
+  "extra": {
+    "ds": {
+      "scale": 0.45,
+      "offset": [
+        300,
+        900
+      ]
+    }
+  },
+  "version": 0.4
+}

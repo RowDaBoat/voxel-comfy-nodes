@@ -11,6 +11,7 @@ The nodes appear under the `vexel` category:
 - **Load Numbered Views**: every view of one frame of an uploaded zip per run, framed for Pixal3D Multi-View Conditioning.
 - **Frame Front, Side and Back Views**: a front, a side and an optional back picture from Load Image nodes, framed for Pixal3D Multi-View Conditioning.
 - **Paint Hunyuan3D Voxels from Views**: colors a Hunyuan3D shape from the front, side and back pictures it was made from.
+- **Voxelize Textured Hunyuan3D Mesh**: turns a mesh painted by Hunyuan3DWrapper into colored voxels, averaging several texture samples into each.
 
 Both save nodes have a **Download** button that fetches their latest file to the machine running the browser.
 
@@ -72,6 +73,13 @@ maximum_size only scales down, so a model past TRELLIS's own resolution stays at
 Hunyuan3D-2mv makes the shape only; **Paint Hunyuan3D Voxels from Views** colors it from the pictures. Each surface voxel takes the pixel of the picture it faces most, among the pictures that see it unblocked; the side picture paints both sides, mirrored on the far one; voxels no picture sees, such as the top of the head or the soles, take the nearest painted color. It also turns the model to face MagicaVoxel's front. Keep its **side_faces** the same as the framing node's.
 
 It needs `hunyuan3d-dit-v2-mv-turbo_fp16.safetensors` in `models/checkpoints`; the KSampler is set for it, 10 steps at cfg 1. The full `hunyuan3d-dit-v2-mv_fp16.safetensors` wants about 30 steps at cfg 5.
+
+## Hunyuan3D-Paint
+`example_workflows/hunyuan3d_paint_to_vox.json` makes the shape like the Hunyuan3D-2mv template and paints it with Tencent's painter instead of projecting the pictures, so the parts no picture shows get painted too. It needs [ComfyUI-Hunyuan3DWrapper](https://github.com/kijai/ComfyUI-Hunyuan3DWrapper) installed with its rasterizer, and `hunyuan3d-dit-v2-mv_fp16.safetensors` in `models/diffusion_models`; the first run downloads the delight and paint models into `models/diffusers`.
+1. Upload the pictures as for the other templates, and keep **side_faces** on `left` on both framing nodes.
+2. Set **maximum_size** on **Save Voxel Model**, then **Run** and **Download**. **Save Textured Mesh** keeps the painted mesh in `output/3D`.
+
+The painter only takes the front: **Frame Front for Delight** puts it on gray (**background** 0.8) for the delight model, the painter paints six views of the shape from it, and they are baked into the mesh's texture. **Voxelize Textured Hunyuan3D Mesh** samples that texture at **resolution** voxels along the longest axis, **samples_per_voxel** samples averaged into each, and Save Voxel Model averages those down to **maximum_size**.
 
 ## Inputs
 - `up_axis`: texture voxels and Pixal3D structures are `y`, TRELLIS.2 structures are `z`.
