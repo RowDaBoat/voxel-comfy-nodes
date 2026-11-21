@@ -340,26 +340,20 @@ class PaintVoxelsFromViews:
                 "voxel": ("VOXEL", {"tooltip": "Hunyuan3D voxels, from VAEDecodeHunyuan3D."}),
                 "threshold": ("FLOAT", {"default": 0.6, "min": -1.0, "max": 1.0, "step": 0.01,
                                         "tooltip": "Hunyuan3D cells above this value are solid."}),
-                "front": ("IMAGE",),
+                "front": ("IMAGE", {"tooltip": "The front picture, painting the voxels it sees."}),
                 "front_mask": ("MASK",),
-                "side": ("IMAGE",),
-                "side_mask": ("MASK",),
-                "side_faces": (["left", "right"], {"tooltip": (
-                    "The way the subject faces in the side picture. It paints that side, and the other side "
-                    "takes it mirrored.")}),
             },
             "optional": {
-                "back": ("IMAGE",),
+                "back": ("IMAGE", {"tooltip": "The back picture, painting the voxels it sees."}),
                 "back_mask": ("MASK",),
             },
         }
 
-    def paint(self, voxel, threshold, front, front_mask, side, side_mask, side_faces, back=None, back_mask=None):
+    def paint(self, voxel, threshold, front, front_mask, back=None, back_mask=None):
         def picture(image, mask, name):
             return Picture(*premultiplied_image(image, mask, name))
         back_picture = picture(back, back_mask, "back") if back is not None else None
-        pictures = views_of(picture(front, front_mask, "front"), picture(side, side_mask, "side"),
-                            side_faces, back_picture)
+        pictures = views_of(picture(front, front_mask, "front"), back_picture)
         painted = painted_voxels(hunyuan_occupancy(voxel, threshold), pictures)
         print(f"[PaintVoxelsFromViews] {painted.data.shape[0]} surface voxels painted from {', '.join(pictures)}")
         return (painted,)

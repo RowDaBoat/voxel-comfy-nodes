@@ -10,7 +10,7 @@ The nodes appear under the `vexel` category:
 - **Load Numbered Image**: one picture of an uploaded zip per run, in the order of their numbers.
 - **Load Numbered Views**: every view of one frame of an uploaded zip per run, framed for Pixal3D Multi-View Conditioning.
 - **Frame Front, Side and Back Views**: a front, a side and an optional back picture from Load Image nodes, framed for Pixal3D Multi-View Conditioning.
-- **Paint Hunyuan3D Voxels from Views**: colors a Hunyuan3D shape from the front, side and back pictures it was made from.
+- **Paint Hunyuan3D Voxels from Views**: colors a Hunyuan3D shape from the front and back pictures it was made from.
 - **Voxelize Textured Hunyuan3D Mesh**: turns a mesh painted by Hunyuan3DWrapper into colored voxels, averaging several texture samples into each.
 
 Both save nodes have a **Download** button that fetches their latest file to the machine running the browser.
@@ -70,7 +70,7 @@ maximum_size only scales down, so a model past TRELLIS's own resolution stays at
 1. Upload the pictures as for the Pixal3D template and keep **side_faces** on `left`. Without a back picture, bypass **Back View** and **Encode Back** with Ctrl+B.
 2. Set **maximum_size** on **Save Voxel Model**, then **Run** and **Download**. **Preview Mesh** shows the shape.
 
-Hunyuan3D-2mv makes the shape only; **Paint Hunyuan3D Voxels from Views** colors it from the pictures. Each surface voxel takes the pixel of the picture it faces most, among the pictures that see it unblocked; the side picture paints both sides, mirrored on the far one; voxels no picture sees, such as the top of the head or the soles, take the nearest painted color. It also turns the model to face MagicaVoxel's front. Keep its **side_faces** the same as the framing node's.
+Hunyuan3D-2mv makes the shape only; **Paint Hunyuan3D Voxels from Views** colors it from the front and back pictures, the side picture only shapes it. Each surface voxel either picture sees unblocked takes its pixel, the picture it faces more winning; the rest, such as the sides, the top of the head or the soles, take the nearest painted color. It also turns the model to face MagicaVoxel's front.
 
 It needs `hunyuan3d-dit-v2-mv-turbo_fp16.safetensors` in `models/checkpoints`; the KSampler is set for it, 10 steps at cfg 1. The full `hunyuan3d-dit-v2-mv_fp16.safetensors` wants about 30 steps at cfg 5.
 
