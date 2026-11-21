@@ -9,7 +9,7 @@ from .palettequantization import quantized, palette_of
 from .vox import write_vox, single_color_palette
 from .voxcollection import write_collection
 from .voxelextraction import (voxel_points, rotated_to_z_up, rotated_to_z_up_in_grid, fitted, size_of,
-                              grid_resolution_of, placed_in_grid, grid_size_of)
+                              grid_resolution_of, placed_in_grid, grid_size_of, with_filled_interior)
 
 
 UP_AXIS_TOOLTIP = (
@@ -22,6 +22,9 @@ MAXIMUM_INDEX = 99999
 PLACEMENT_TOOLTIP = (
     "fit: the model is cropped to its own bounds. grid: the model keeps its place in TRELLIS's grid "
     "and every model is the same size, so frames of an animation line up."
+)
+FILL_INTERIOR_TOOLTIP = (
+    "TRELLIS only makes the surface. Fills the space enclosed by it with the color of the nearest surface voxel."
 )
 
 
@@ -41,7 +44,8 @@ def voxel_options():
 
 
 def placement_option():
-    return {"placement": (["fit", "grid"], {"tooltip": PLACEMENT_TOOLTIP})}
+    return {"placement": (["fit", "grid"], {"tooltip": PLACEMENT_TOOLTIP}),
+            "fill_interior": ("BOOLEAN", {"default": True, "tooltip": FILL_INTERIOR_TOOLTIP})}
 
 
 def fitted_cells(voxel, up_axis, maximum_size, threshold, batch_index):
@@ -84,14 +88,20 @@ def palette_and_indices(cell_colors, color_count, fallback_color):
     if cell_colors is None:
         return single_color_palette(fallback_color), None
     centers, indices = quantized(cell_colors, color_count)
-    return palette_of(centers), indices.tolist()
+    return palette_of(centers), indices
+
+
+def saved_voxels(cells, indices, size, fill_interior):
+    if fill_interior:
+        cells, indices = with_filled_interior(cells, indices, size)
+    return cells, vox_voxels(cells, indices)
 
 
 def vox_voxels(cells, indices):
     positions = cells.tolist()
     if indices is None:
         return [(*position, 1) for position in positions]
-    return [(*position, index + 1) for position, index in zip(positions, indices)]
+    return [(*position, index + 1) for position, index in zip(positions, indices.tolist())]
 
 
 class SaveVoxelsAsVox:
@@ -112,11 +122,12 @@ class SaveVoxelsAsVox:
         }
 
     def save(self, voxel, filename_prefix, up_axis, maximum_size, colors, fallback_color, threshold, batch_index,
-             placement="fit"):
+             placement="fit", fill_interior=True):
         cells, cell_colors, size = voxel_cells(voxel, up_axis, maximum_size, threshold, batch_index, placement)
         palette, indices = palette_and_indices(cell_colors, colors, fallback_color)
+        cells, voxels = saved_voxels(cells, indices, size, fill_interior)
         path, vox_file = next_output_file(filename_prefix)
-        write_vox(path, size, vox_voxels(cells, indices), palette)
+        write_vox(path, size, voxels, palette)
         summary = f"{cells.shape[0]} voxels, size {size}, {len(palette)} colors, saved to {path}"
         print(f"[SaveVoxelsAsVox] {summary}")
         return {"ui": {"text": [summary], "vox_files": [vox_file]}}
@@ -165,13 +176,14 @@ class SaveVoxelsToVoxCollection:
         }
 
     def save(self, voxel, name, collection, up_axis, maximum_size, colors, fallback_color, threshold,
-             batch_index, spacing, placement="fit"):
+             batch_index, spacing, placement="fit", fill_interior=True):
         models_folder, collection_path = collection_paths(collection)
         os.makedirs(models_folder, exist_ok=True)
         model_name = safe_name(name, next_model_name(models_folder))
         cells, cell_colors, size = voxel_cells(voxel, up_axis, maximum_size, threshold, batch_index, placement)
         palette, indices = palette_and_indices(cell_colors, colors, fallback_color)
-        write_vox(os.path.join(models_folder, f"{model_name}.vox"), size, vox_voxels(cells, indices), palette)
+        cells, voxels = saved_voxels(cells, indices, size, fill_interior)
+        write_vox(os.path.join(models_folder, f"{model_name}.vox"), size, voxels, palette)
         models, shared_palette = write_collection(models_folder, collection_path, colors, spacing)
         summary = (f"{model_name}: {cells.shape[0]} voxels, size {size}. "
                    f"{collection_path} holds {len(models)} models sharing {len(shared_palette)} colors")

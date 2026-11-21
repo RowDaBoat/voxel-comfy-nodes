@@ -173,6 +173,66 @@ class VoxTests(unittest.TestCase):
             self.save(FakeVoxel(torch.zeros(1, 8, 8, 8)))
 
 
+def box_shell(side, open_top=False):
+    box = torch.ones(side, side, side, dtype=torch.bool)
+    box[1:-1, 1:-1, 1:-1 if not open_top else side] = False
+    return box
+
+
+def shell_voxel(shell, color_of=None, resolution=256):
+    coordinates = shell.nonzero()
+    rows = torch.cat((torch.zeros(coordinates.shape[0], 1, dtype=torch.long), coordinates), dim=1)
+    if color_of is None:
+        return FakeVoxel(rows, None, resolution)
+    base_colors = torch.tensor([color_of(*point) for point in coordinates.tolist()])
+    return FakeVoxel(rows, texture_channels(base_colors), resolution)
+
+
+class FillInteriorTests(unittest.TestCase):
+    def setUp(self):
+        self.directory = tempfile.mkdtemp()
+        sys.modules["folder_paths"] = fake_folder_paths(self.directory)
+        self.nodes = importlib.import_module("comfyui_vox.nodes")
+        self.nodes.folder_paths = sys.modules["folder_paths"]
+
+    def save(self, voxel, **overrides):
+        options = dict(filename_prefix="test", up_axis="z", maximum_size=64, colors=64,
+                       fallback_color="#ff8000", threshold=0.5, batch_index=0)
+        options.update(overrides)
+        self.nodes.SaveVoxelsAsVox().save(voxel, **options)
+        return read_vox(os.path.join(self.directory, "test_00001_.vox"))
+
+    def test_the_space_inside_the_surface_is_filled(self):
+        _, voxels, _ = self.save(shell_voxel(box_shell(8)))
+        self.assertEqual(len(voxels), 8 ** 3)
+
+    def test_the_surface_is_left_hollow_when_asked(self):
+        _, voxels, _ = self.save(shell_voxel(box_shell(8)), fill_interior=False)
+        self.assertEqual(len(voxels), 8 ** 3 - 6 ** 3)
+
+    def test_the_inside_takes_the_color_of_the_nearest_surface(self):
+        red_top = lambda x, y, z: [1.0, 0.0, 0.0] if z >= 5 else [0.0, 0.0, 1.0]
+        _, voxels, palette = self.save(shell_voxel(box_shell(11), red_top))
+        colors = {voxel[:3]: palette[voxel[3] - 1] for voxel in voxels}
+        self.assertEqual(colors[(5, 5, 8)], (255, 0, 0, 255))
+        self.assertEqual(colors[(5, 5, 2)], (0, 0, 255, 255))
+
+    def test_an_open_surface_stays_hollow(self):
+        _, voxels, _ = self.save(shell_voxel(box_shell(8, open_top=True)))
+        self.assertEqual(len(voxels), int(box_shell(8, open_top=True).sum()))
+
+    def test_grid_placement_is_filled_in_its_grid(self):
+        size, voxels, _ = self.save(shell_voxel(box_shell(8), resolution=16), placement="grid", maximum_size=16)
+        self.assertEqual(size, (16, 16, 16))
+        self.assertEqual(len(voxels), 8 ** 3)
+
+    def test_collection_models_are_filled(self):
+        self.nodes.SaveVoxelsToVoxCollection().save(shell_voxel(box_shell(8)), "box", "vox/boxes", "z", 64, 64,
+                                                    "#ff8000", 0.5, 0, 8)
+        _, voxels, _ = read_vox(os.path.join(self.directory, "vox", "boxes", "box.vox"))
+        self.assertEqual(len(voxels), 8 ** 3)
+
+
 def colored_line(length, color):
     coordinates = torch.tensor([[0, x, 0, 0] for x in range(length)])
     base_colors = torch.tensor([color] * length)

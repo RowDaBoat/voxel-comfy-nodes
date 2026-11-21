@@ -74,6 +74,7 @@ maximum_size only scales down, so a model past TRELLIS's own resolution stays at
 - `collection` (multi-model): where the models and the multi-model file go, inside the output directory.
 - `spacing` (multi-model): empty voxels between models.
 - `placement`: `fit` crops each model to its own bounds; `grid` keeps it in place in TRELLIS's grid, every model the same size, so the frames of an animation line up.
+- `fill_interior`: TRELLIS only makes the surface; on by default, fills the space it encloses with the color of the nearest surface voxel. A hole in the surface leaves that part hollow.
 
 
 ## Tests

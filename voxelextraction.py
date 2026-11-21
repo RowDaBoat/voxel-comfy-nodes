@@ -94,3 +94,44 @@ def placed_in_grid(coordinates, colors, maximum_size, resolution):
 def grid_size_of(maximum_size, resolution):
     side = min(maximum_size, resolution)
     return (side, side, side)
+
+
+def face_neighbor_maximum(grid, fill):
+    padded = torch.nn.functional.pad(grid.unsqueeze(0), (1, 1, 1, 1, 1, 1), value=fill)[0]
+    return torch.stack((padded[2:, 1:-1, 1:-1], padded[:-2, 1:-1, 1:-1],
+                        padded[1:-1, 2:, 1:-1], padded[1:-1, :-2, 1:-1],
+                        padded[1:-1, 1:-1, 2:], padded[1:-1, 1:-1, :-2])).amax(dim=0)
+
+
+def outside_of(occupied):
+    empty = ~occupied
+    outside = torch.zeros_like(occupied)
+    while True:
+        grown = empty & (face_neighbor_maximum(outside.to(torch.int8), 1) > 0)
+        if torch.equal(grown, outside):
+            return outside
+        outside = grown
+
+
+def nearest_shell_cells(owners, interior):
+    while True:
+        candidates = face_neighbor_maximum(owners, -1)
+        reached = interior & (owners < 0) & (candidates >= 0)
+        if not reached.any():
+            return owners[interior]
+        owners[reached] = candidates[reached]
+
+
+def with_filled_interior(cells, indices, size):
+    occupied = torch.zeros(size, dtype=torch.bool)
+    occupied[tuple(cells.T)] = True
+    interior = ~occupied & ~outside_of(occupied)
+    if not interior.any():
+        return cells, indices
+    owners = torch.full(size, -1, dtype=torch.long)
+    owners[tuple(cells.T)] = torch.arange(cells.shape[0])
+    interior_owners = nearest_shell_cells(owners, interior)
+    filled_cells = torch.cat((cells, interior.nonzero()))
+    if indices is None:
+        return filled_cells, None
+    return filled_cells, torch.cat((indices, indices[interior_owners]))
