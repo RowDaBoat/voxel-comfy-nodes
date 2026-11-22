@@ -2,7 +2,7 @@
   "id": "6b1f2c9e-4d0a-4e57-9a43-5e3c1d2b7a90",
   "revision": 0,
   "last_node_id": 18,
-  "last_link_id": 30,
+  "last_link_id": 32,
   "nodes": [
     {
       "id": 1,
@@ -64,14 +64,16 @@
           "name": "IMAGE",
           "type": "IMAGE",
           "links": [
-            3
+            3,
+            26
           ]
         },
         {
           "name": "MASK",
           "type": "MASK",
           "links": [
-            4
+            4,
+            27
           ]
         }
       ],
@@ -106,7 +108,7 @@
           "type": "IMAGE",
           "links": [
             5,
-            26
+            28
           ]
         },
         {
@@ -114,7 +116,7 @@
           "type": "MASK",
           "links": [
             6,
-            27
+            29
           ]
         }
       ],
@@ -618,7 +620,7 @@
           "type": "VOXEL",
           "links": [
             23,
-            29
+            31
           ]
         }
       ],
@@ -662,15 +664,27 @@
           "link": 25
         },
         {
-          "name": "back",
+          "name": "side",
           "type": "IMAGE",
           "link": 26,
           "shape": 7
         },
         {
-          "name": "back_mask",
+          "name": "side_mask",
           "type": "MASK",
           "link": 27,
+          "shape": 7
+        },
+        {
+          "name": "back",
+          "type": "IMAGE",
+          "link": 28,
+          "shape": 7
+        },
+        {
+          "name": "back_mask",
+          "type": "MASK",
+          "link": 29,
           "shape": 7
         }
       ],
@@ -679,7 +693,7 @@
           "name": "VOXEL",
           "type": "VOXEL",
           "links": [
-            28
+            30
           ]
         }
       ],
@@ -692,7 +706,8 @@
       "mode": 0,
       "title": "Paint Hunyuan3D Voxels from Views",
       "widgets_values": [
-        0.6
+        0.6,
+        "left"
       ]
     },
     {
@@ -710,7 +725,7 @@
         {
           "name": "voxel",
           "type": "VOXEL",
-          "link": 28
+          "link": 30
         }
       ],
       "outputs": [],
@@ -749,7 +764,7 @@
         {
           "name": "voxel",
           "type": "VOXEL",
-          "link": 29
+          "link": 31
         }
       ],
       "outputs": [
@@ -757,7 +772,7 @@
           "name": "MESH",
           "type": "MESH",
           "links": [
-            30
+            32
           ]
         }
       ],
@@ -788,7 +803,7 @@
         {
           "name": "mesh",
           "type": "MESH",
-          "link": 30
+          "link": 32
         }
       ],
       "outputs": [],
@@ -823,7 +838,7 @@
       "mode": 0,
       "title": "Front, side and back to .vox with Hunyuan3D-2mv",
       "widgets_values": [
-        "## Front, side and back to .vox with Hunyuan3D-2mv\n1. Upload the front picture on **Front View**, the profile on **Side View** and the subject from behind on **Back View**, all with the background in alpha and at the same pixel scale.\n2. Keep **side_faces** on `left`: the side goes through the left output into Hunyuan's left view.\n3. Set **maximum_size** on **Save Voxel Model**: the voxels along the model's longest axis.\n4. Press **Run**, then **Download** on Save Voxel Model. **Preview Mesh** shows the shape.\n\n**Paint Hunyuan3D Voxels from Views** colors the model from the front and back pictures only: each surface voxel either picture sees takes its pixel, the one it faces more winning, and the rest, such as the sides, take the nearest painted color. The side picture only shapes the model.\n\nWithout a back picture, select **Back View** and **Encode Back** and press Ctrl+B.\n\nThe KSampler is set for the turbo checkpoint, 10 steps at cfg 1. With `hunyuan3d-dit-v2-mv_fp16.safetensors` raise steps to about 30 and cfg to about 5.\n\nEvery Run uses a new seed; set control_after_generate to fixed to repeat one."
+        "## Front, side and back to .vox with Hunyuan3D-2mv\n1. Upload the front picture on **Front View**, the profile on **Side View** and the subject from behind on **Back View**, all with the background in alpha and at the same pixel scale.\n2. Keep **side_faces** on `left`: the side goes through the left output into Hunyuan's left view.\n3. Set **maximum_size** on **Save Voxel Model**: the voxels along the model's longest axis.\n4. Press **Run**, then **Download** on Save Voxel Model. **Preview Mesh** shows the shape.\n\n**Paint Hunyuan3D Voxels from Views** colors the model from the pictures: each surface voxel takes the pixel of the picture it faces most, the side picture paints both sides, mirrored on the far one, and voxels no picture sees take the nearest painted color. Keep its **side_faces** the same as the framing node's.\n\nWithout a back picture, select **Back View** and **Encode Back** and press Ctrl+B.\n\nThe KSampler is set for the turbo checkpoint, 10 steps at cfg 1. With `hunyuan3d-dit-v2-mv_fp16.safetensors` raise steps to about 30 and cfg to about 5.\n\nEvery Run uses a new seed; set control_after_generate to fixed to repeat one."
       ]
     }
   ],
@@ -1030,7 +1045,7 @@
     ],
     [
       26,
-      3,
+      2,
       0,
       18,
       3,
@@ -1038,7 +1053,7 @@
     ],
     [
       27,
-      3,
+      2,
       1,
       18,
       4,
@@ -1046,6 +1061,22 @@
     ],
     [
       28,
+      3,
+      0,
+      18,
+      5,
+      "IMAGE"
+    ],
+    [
+      29,
+      3,
+      1,
+      18,
+      6,
+      "MASK"
+    ],
+    [
+      30,
       18,
       0,
       14,
@@ -1053,7 +1084,7 @@
       "VOXEL"
     ],
     [
-      29,
+      31,
       13,
       0,
       15,
@@ -1061,7 +1092,7 @@
       "VOXEL"
     ],
     [
-      30,
+      32,
       15,
       0,
       16,

@@ -344,16 +344,22 @@ class PaintVoxelsFromViews:
                 "front_mask": ("MASK",),
             },
             "optional": {
+                "side": ("IMAGE", {"tooltip": "The side picture, painting both sides, mirrored on the far one."}),
+                "side_mask": ("MASK",),
+                "side_faces": (["left", "right"], {"default": "left", "tooltip": (
+                    "The way the subject faces in the side picture. It paints that side, and the other side "
+                    "takes it mirrored.")}),
                 "back": ("IMAGE", {"tooltip": "The back picture, painting the voxels it sees."}),
                 "back_mask": ("MASK",),
             },
         }
 
-    def paint(self, voxel, threshold, front, front_mask, back=None, back_mask=None):
+    def paint(self, voxel, threshold, front, front_mask, side=None, side_mask=None, side_faces="left", back=None,
+              back_mask=None):
         def picture(image, mask, name):
-            return Picture(*premultiplied_image(image, mask, name))
-        back_picture = picture(back, back_mask, "back") if back is not None else None
-        pictures = views_of(picture(front, front_mask, "front"), back_picture)
+            return Picture(*premultiplied_image(image, mask, name)) if image is not None else None
+        pictures = views_of(picture(front, front_mask, "front"), picture(side, side_mask, "side"), side_faces,
+                            picture(back, back_mask, "back"))
         painted = painted_voxels(hunyuan_occupancy(voxel, threshold), pictures)
         print(f"[PaintVoxelsFromViews] {painted.data.shape[0]} surface voxels painted from {', '.join(pictures)}")
         return (painted,)

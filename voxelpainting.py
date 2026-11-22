@@ -7,8 +7,13 @@ from .voxelextraction import face_neighbor_maximum, nearest_shell_cells
 from .viewloading import bounds_of
 
 
-VIEW_DIRECTIONS = {"front": (0.0, 0.0, 1.0), "back": (0.0, 0.0, -1.0)}
-HORIZONTAL_DIRECTIONS = {"front": 1, "back": -1}
+VIEW_DIRECTIONS = {
+    "front": (0.0, 0.0, 1.0),
+    "back": (0.0, 0.0, -1.0),
+    "left": (1.0, 0.0, 0.0),
+    "right": (-1.0, 0.0, 0.0),
+}
+HORIZONTAL_AXES = {"front": (0, 1), "back": (0, -1), "left": (2, -1), "right": (2, 1)}
 OPAQUE = 0.5
 NORMAL_RADIUS = 2
 
@@ -24,6 +29,7 @@ class PaintedVoxels:
 class Picture:
     pixels: numpy.ndarray
     alpha: numpy.ndarray
+    mirrored: bool = False
 
 
 def hunyuan_occupancy(voxel, threshold):
@@ -52,20 +58,24 @@ def normals_of(occupied):
 
 
 def visible_from(occupied, view):
-    depth = occupied.shape[2]
-    positions = torch.arange(depth).view(1, 1, depth)
-    if view == "front":
-        first = torch.where(occupied, positions, -1).amax(dim=2, keepdim=True)
+    axis = 2 if view in ("front", "back") else 0
+    length = occupied.shape[axis]
+    positions = torch.arange(length).view([length if dimension == axis else 1 for dimension in range(3)])
+    if view in ("front", "left"):
+        first = torch.where(occupied, positions, -1).amax(dim=axis, keepdim=True)
     else:
-        first = torch.where(occupied, positions, depth).amin(dim=2, keepdim=True)
+        first = torch.where(occupied, positions, length).amin(dim=axis, keepdim=True)
     return occupied & (positions == first)
 
 
 def picture_coordinates(cells, extents, view, picture):
+    horizontal_axis, direction = HORIZONTAL_AXES[view]
+    if picture.mirrored:
+        direction = -direction
     left, top, right, bottom = bounds_of(picture.alpha >= OPAQUE)
-    low, high = extents[0]
-    across = (cells[:, 0].float() - low + 0.5) / (high - low + 1)
-    if HORIZONTAL_DIRECTIONS[view] < 0:
+    low, high = extents[horizontal_axis]
+    across = (cells[:, horizontal_axis].float() - low + 0.5) / (high - low + 1)
+    if direction < 0:
         across = 1 - across
     low_y, high_y = extents[1]
     down = 1 - (cells[:, 1].float() - low_y + 0.5) / (high_y - low_y + 1)
@@ -109,8 +119,15 @@ def spread_colors(occupied, cells, colors, painted):
     return torch.where((sources >= 0)[:, None], colors[painted][sources.clamp(min=0)], colors)
 
 
-def views_of(front, back):
-    return {"front": front} if back is None else {"front": front, "back": back}
+def views_of(front, side=None, side_faces="left", back=None):
+    pictures = {"front": front}
+    if side is not None:
+        other_side = "right" if side_faces == "left" else "left"
+        pictures[side_faces] = side
+        pictures[other_side] = Picture(side.pixels, side.alpha, mirrored=True)
+    if back is not None:
+        pictures["back"] = back
+    return pictures
 
 
 def painted_voxels(occupied, pictures):
